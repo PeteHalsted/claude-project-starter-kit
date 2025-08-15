@@ -83,13 +83,13 @@ When making UI changes, you MUST:
 
 ### Documentation
 
-- Update ALL documentation files as need when creating a PR or committing changes changes
+- Update ALL documentation files as need when creating a PR or committing changes 
 - Ensure consistency across all documentation
 - Document architectural decisions and patterns
 
-  ### Major Feature Documentation Requirements belong in the `/docs` folder
-  - **What goes in `/docs`:**
-    - **Comprehensive Feature Documentation**: All major features implemented through design or requirements document MUST include a detailed documentation file in the docs/ folder following the established format or incorporated into an existing document if it is a enhancement of an existing feature
+  ### Major Feature Documentation Requirements belong in the `/project-documentation` folder
+  - **What goes in `/project-documentation`:**
+    - **Comprehensive Feature Documentation**: All major features implemented through design or requirements document MUST include a detailed documentation file in the project-documentation/ folder following the established format or incorporated into an existing document if it is a enhancement of an existing feature
     - **Cross-Documentation Review**: ALL existing documentation files MUST be reviewed and updated for consistency when new features are added
     - **Documentation Standards**: Follow the structure and style of existing documentation files with technical accuracy and user-focused content
     - Permanent system documentation
@@ -101,7 +101,7 @@ When making UI changes, you MUST:
     - Include quickstart steps where relevant.
     - **If you think a new document should be created ask the user first**
     ```
-    For files in the `/docs` folder, only include up-to-date documentation for each feature—do not include historical or overly technical details. Documentation should provide:
+    For files in the `/project-documentation` folder, only include up-to-date documentation for each feature—do not include historical or overly technical details. Documentation should provide:
     * Overviews of feature sets
     * Basics of the tech stack
     * Clear explanations of complex or tricky portions, with examples as needed

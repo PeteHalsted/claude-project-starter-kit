@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 3. ** Before making ANY changes:**
    - Review `README.md` for up-to-date project information,basic tech stack, commom commands, enviroment requirements
    - Review `project-documentation\developmentguidelines.md` for development principles
-   - `project-documentation\projectstructure.md` for project folder structure, file naming conventions, basic architechure
+   - Review `project-documentation\projectstructure.md` for project folder structure, file naming conventions, basic architechure
 
     **_Most Up-to-Date Project Information_**
 

@@ -17,6 +17,7 @@ apps/
     │   ├── routers/         # API route definitions
     │   ├── db/              # Database schema and connection
     │   └── lib/             # Server utilities and context
+project-documentation/              # Comprehensive project documentation	
 ```
 
 ## Key Architecture Patterns
