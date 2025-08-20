@@ -326,7 +326,7 @@ You must create a structured directory layout in the project to document all des
 
 ### Directory Structure
 
-    /design-documentation/
+    /project-documentation/design-documentation/
     ├── README.md                    # Project design overview and navigation
     ├── design-system/
     │   ├── README.md               # Design system overview and philosophy

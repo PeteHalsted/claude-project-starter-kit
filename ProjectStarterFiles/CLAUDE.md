@@ -74,6 +74,10 @@ When creating any document, agents must decide the location based on the followi
 - Examples:
     - `sse-migration-plan-frontend-developer.md`
     - `debug-analysis-imap-connection-debugger.md`
+	
+	
+### MUST FOLLOW RULES	
+- NEVER run the dev servers, as the user to, he likely has them running, and if you run them it will block ports and cause issues	
 
 
 ### Context7 Workflow Policy
@@ -90,4 +94,27 @@ When creating any document, agents must decide the location based on the followi
 - ✅ Good: `How do I add schema validation with Zod in Express? use context7`
 - ❌ Not allowed: Answers about a library without referencing up-to-date docs from Context7
 - If multiple libraries are involved, repeat the above steps for each before answering
+
+### Linear Integration Policy
+
+**IMPORTANT**: When creating Linear issues for this codebase:
+
+- **Project Association**: ALL issues related to this codebase MUST be associated with the "mysite.nextagedesigns" project
+- **Project ID**: `237d3c83-4e70-418d-bb16-08d51c135e8e`
+- **Team**: Nextage (ID: `5a4aca93-64c4-433e-9827-ec4ac97b76f5`)
+
+**When creating issues via Linear MCP:**
+Always include the project parameter:
+```
+project: "mysite.nextagedesigns"
+```
+
+**When moving items to Linear backlog:**
+- When the user requests to "move to Linear backlog" or similar, ALWAYS:
+  1. Create the Linear issue(s) with appropriate details
+  2. Remove the corresponding sections from the planning/documentation files
+  3. This prevents duplication and ensures Linear is the single source of truth for backlog items
+
+This ensures all issues are properly tracked within the project context.
+
 

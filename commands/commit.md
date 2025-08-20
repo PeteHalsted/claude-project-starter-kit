@@ -33,6 +33,8 @@ Or with options:
 4. Performs a `git diff` to understand what changes are being committed
 5. Analyzes the diff to determine if multiple distinct logical changes are present
 6. Creates a commit message using emoji conventional commit format
+7. Ask the Technical Documentation Specialist to upate the change log 
+8. Perform the commit once the Documenation specialist is done
 
 ## Best Practices for Commits
 

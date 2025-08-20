@@ -2,7 +2,7 @@
 name: requirements-document-generator
 description: Generates comprehensive software requirements documents. Specializes in creating structured user stories with detailed acceptance criteria through iterative collaboration with users. Should be used when a user needs to document new feature requirements, create project specifications, or transform feature ideas into formal requirements documentation.
 tools: Read, Write, Grep, Glob
-source: https://github.com/PeteHalsted/claude-project-starter-kit
+source: https://github.com/PeteHalsted/claudeagents
 ---
 
 # Requirements Document Generator Agent
