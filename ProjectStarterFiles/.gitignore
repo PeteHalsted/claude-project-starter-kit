@@ -1,0 +1,32 @@
+# Sensitive files
+.env
+*.key
+*.pem
+.auth_token
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+/dist/
+/build/
+/out/
+/*.o
+/*.pyc
+/*.class
+
+# Dependency directories
+/node_modules/
+/vendor/
+
+/# Logs and runtime files
+*.log
+*.tmp
+/logs/
+
+# IDE/Editor folders
+server/public
+vite.config.ts.*
+*.tar.gz
+.vscode

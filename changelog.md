@@ -12,19 +12,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New agent: `respect-dat-spec.md` - Agent focused on specification compliance and validation
 - New command documentation: `checkpoint.md` - Documentation for checkpoint command functionality
 - New output style: `task-adaptive.md` - Adaptive output formatting for different task types
+- Added `ProjectStarterFiles/.gitignore` - Standard ignore patterns for sensitive files, OS files, build artifacts, dependencies, logs, and IDE folders
 
 ### Changed
 - Enhanced `brochure-web-designer.md` - Minor fixes and improvements
 - Enhanced `requirements-document-generator.md` - Minor fixes and improvements  
 - Enhanced `product-manager.md` - Minor fixes and improvements
 - Enhanced `ux-ui-designer.md` - Minor fixes and improvements
-- Enhanced `CLAUDE.md` - Improved documentation and structure
+- Enhanced `CLAUDE.md` - Improved documentation and structure, removed references to obsolete projectstructure.md
 - Streamlined `developmentguidelines.md` - Simplified and clarified guidelines
 - Enhanced `commit.md` - Improved commit command documentation
 
 ### Removed
 - Deleted `folder-documentation-generator.md` - Functionality consolidated into other agents
 - Deleted `ProjectStarterFiles/readme.md` - Redundant documentation removed
+- Deleted `ProjectStarterFiles/projectstructure.md` - Obsolete documentation file removed
 
 ## [Previous Releases]
 
