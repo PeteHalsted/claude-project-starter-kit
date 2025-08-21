@@ -1,38 +1,11 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+We are not tracking these entries by version or function, but in chronological order. 
+There should be a heading for each date '### July 2, 2025'
+Within the day there can be sections headings for group related changes
+This is not just a dummp of git comments! This is to document key changes, new features, functional improvements.
+I don't care that you reorganized the documentation folder, it doesn't effect the function of the application!
 
-## [Unreleased]
-
-### Added
-- New agent: `technical-documentation-specialist.md` - Specialized agent for creating comprehensive technical documentation
-- New agent: `respect-dat-spec.md` - Agent focused on specification compliance and validation
-- New command documentation: `checkpoint.md` - Documentation for checkpoint command functionality
-- New output style: `task-adaptive.md` - Adaptive output formatting for different task types
-- Added `ProjectStarterFiles/.gitignore` - Standard ignore patterns for sensitive files, OS files, build artifacts, dependencies, logs, and IDE folders
-
-### Changed
-- Enhanced `brochure-web-designer.md` - Minor fixes and improvements
-- Enhanced `requirements-document-generator.md` - Minor fixes and improvements  
-- Enhanced `product-manager.md` - Minor fixes and improvements
-- Enhanced `ux-ui-designer.md` - Minor fixes and improvements
-- Enhanced `CLAUDE.md` - Improved documentation and structure, removed references to obsolete projectstructure.md
-- Streamlined `developmentguidelines.md` - Simplified and clarified guidelines
-- Enhanced `commit.md` - Improved commit command documentation
-
-### Removed
-- Deleted `folder-documentation-generator.md` - Functionality consolidated into other agents
-- Deleted `ProjectStarterFiles/readme.md` - Redundant documentation removed
-- Deleted `ProjectStarterFiles/projectstructure.md` - Obsolete documentation file removed
-
-## [Previous Releases]
-
-### 2024-08-XX - Project Restructuring
-- 📝 docs: update documentation paths and fix typos
-- ♻️ refactor: reorganize project structure with agent collections and starter files
-
-### 2024-08-XX - Initial Release  
-- Initial commit - Claude agents collection
+### Mmmmmm DD, YYYY

@@ -4,24 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## CRITICAL: First Steps for New Claude Code Instances
 
-1. Read Serena Inital Instructions
+1. Read Serena Initial Instructions
 
 2. **At the start of each session, read project documentation in this order:**
    - This CLAUDE.md file (you're reading it now)
-   - Readme files for up-to-date project information,basic tech stack, commom commands, enviroment requirements
-     - ** Any `**/README.md` docs across the project
-     - ** Any `**/README.*.md` docs across the project
-   - `project-documentation\developmentguidelines.md` for development principles
+   - `README.md` for essential project overview, quick start, and core commands
+   - `coding-standards.md` for development principles
 
    *** IMPORTANT YOU MUST FOLLOW ALL RULES IN ANY OF THE ABOVE FILES AT ALL TIMES ***
 
-3. ** Before making ANY changes:**
-   - Review `README.md` for up-to-date project information,basic tech stack, commom commands, enviroment requirements
-   - Review `project-documentation\developmentguidelines.md` for development principles
+**Most Up-to-Date Project Information:**
 
-    **_Most Up-to-Date Project Information_**
-
-    To find the most up-to-date project information, review the README.md file in the root of the project. This file is updated continuously during development and is likely more up-to-date on the overall structure than this CLAUDE.md file  ***ALWAYS*** follow the rules and instructions in all, but if there is a conflict or project information is unclear, trust the README.md file or ask the user for help!
+The README.md file contains the most current project information and is updated continuously during development. If there is a conflict or project information is unclear, trust the README.md file or ask the user for help!
 
 ## MANDATORY Subagent Usage
 
@@ -49,13 +43,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **NEVER skip directly to implementation without appropriate subagent consultation.**
 
+### Parallel Sub-Agents (when helpful)
+- You may conceptually split work into parallel sub-agents (e.g., "API spec," "implementation," "tests," "docs")
+- Maintain clear boundaries and ownership to avoid stepping on each other
+- Integrate results through a final verification/consistency pass
 
 ## 📄 Agent Documentation Standards
 
 When creating any document, agents must decide the location based on the following priority:
 
 1. **Follow specific instructions** in the agent’s own file, prompt, or user request.
-2. **Special files** — `Changelog.md`, `README.md`, `README.*.md`, and `claude.md` — must follow their predefined location rules.
+2. **Special files** — `Changelog.md`, `README.md`, and `claude.md` — must follow their predefined location rules.
 3. **Temporary documents** (disposable when work is complete) go in `project-documentation\temporary`. Examples:
     - Implementation/migration plans
     - Task breakdowns
@@ -72,11 +70,9 @@ When creating any document, agents must decide the location based on the followi
 - Examples:
     - `sse-migration-plan-frontend-developer.md`
     - `debug-analysis-imap-connection-debugger.md`
-	
-	
-### MUST FOLLOW RULES	
-- NEVER run the dev servers, as the user to, he likely has them running, and if you run them it will block ports and cause issues	
 
+### MUST FOLLOW RULES
+- NEVER run the dev servers, ask the user to
 
 ### Context7 Workflow Policy
 
@@ -93,26 +89,4 @@ When creating any document, agents must decide the location based on the followi
 - ❌ Not allowed: Answers about a library without referencing up-to-date docs from Context7
 - If multiple libraries are involved, repeat the above steps for each before answering
 
-### Linear Integration Policy
-
-**IMPORTANT**: When creating Linear issues for this codebase:
-
-- **Project Association**: ALL issues related to this codebase MUST be associated with the "mysite.nextagedesigns" project
-- **Project ID**: `237d3c83-4e70-418d-bb16-08d51c135e8e`
-- **Team**: Nextage (ID: `5a4aca93-64c4-433e-9827-ec4ac97b76f5`)
-
-**When creating issues via Linear MCP:**
-Always include the project parameter:
-```
-project: "mysite.nextagedesigns"
-```
-
-**When moving items to Linear backlog:**
-- When the user requests to "move to Linear backlog" or similar, ALWAYS:
-  1. Create the Linear issue(s) with appropriate details
-  2. Remove the corresponding sections from the planning/documentation files
-  3. This prevents duplication and ensures Linear is the single source of truth for backlog items
-
-This ensures all issues are properly tracked within the project context.
-
-
+## Project-Specific Rules
