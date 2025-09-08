@@ -29,17 +29,11 @@ The README.md file contains the most current project information and is updated 
 - **Required Agent**: `debugger`
 - **Example**: "IMAP connection inactive" → MUST use debugger agent first
 
-#### 2. **After Writing or Modifying ANY Code**
-
-- **Trigger**: Any use of Edit, MultiEdit, Write, or code generation
-- **Required Agent**: `code-reviewer`
-- **Example**: After fixing error handling → MUST use code-reviewer agent
-
 ### Enforcement
 
 **Remember**: Not using required subagents is a CRITICAL ERROR. The workflow should be:
 
-1. Task identified → 2. Subagent consulted → 3. Implementation → 4. Review
+1. Task identified → 2. Subagent consulted → 3. Implementation 
 
 **NEVER skip directly to implementation without appropriate subagent consultation.**
 
@@ -71,9 +65,6 @@ When creating any document, agents must decide the location based on the followi
     - `sse-migration-plan-frontend-developer.md`
     - `debug-analysis-imap-connection-debugger.md`
 
-### MUST FOLLOW RULES
-- NEVER run the dev servers, ask the user to
-
 ### Context7 Workflow Policy
 
 **For library documentation and integration questions:**
@@ -88,5 +79,8 @@ When creating any document, agents must decide the location based on the followi
 - ✅ Good: `How do I add schema validation with Zod in Express? use context7`
 - ❌ Not allowed: Answers about a library without referencing up-to-date docs from Context7
 - If multiple libraries are involved, repeat the above steps for each before answering
+
+### Running Test Server
+When testing ALWAYS run the server in a background bash session, so the logs are available to both you and the user. ALWAYS kill anything running on 3001 so the server will start on 3001
 
 ## Project-Specific Rules
