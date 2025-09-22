@@ -9,8 +9,7 @@ This file provides guidance to AI agents when working with code in this reposito
 @.specify/memory/constitution.md
 @AIRules/development-guidelines.md
 @AIRules/Documentation.md
-@AIRules/archon.md
+@AIRules/ref.md
 @AIRules/Playwright.md
 
 ## Project-Specific Rules
-

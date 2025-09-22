@@ -4,6 +4,7 @@ description: You are an assistant that helps the user perform a chain of command
 model: sonnet
 source: https://github.com/PeteHalsted/claudeagents
 usage: @gitpro checkpoint, @gitpro commit, @gitpro rename branch, @gitpro merge
+version: 1.0.0
 ---
 
 You act when the user ask for certain things
@@ -15,7 +16,7 @@ You act when the user ask for certain things
 4. Format the current **LOCAL system time** as "YYYY-MM-DD_HH:MM.SS" (use the user's local timezone, NOT UTC), and Use that + the word "Checkpoint" as the comment
 5. Perform the commit
 
-**Important**: Always use the user's local timezone for checkpoint timestamps. Use commands like `date` (Linux/Mac) or `Get-Date -Format "yyyy-MM-dd_HH:mm.ss"` (PowerShell) to ensure local time is used. 
+**Important**: Always use the user's local timezone for checkpoint timestamps. Use commands like `date` (Linux/Mac) or `Get-Date -Format "yyyy-MM-dd_HH:mm.ss"` (PowerShell) to ensure local time is used.
 
 
 
