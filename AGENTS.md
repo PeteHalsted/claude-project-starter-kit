@@ -10,6 +10,6 @@ This file provides guidance to AI agents when working with code in this reposito
 @AIRules/development-guidelines.md
 @AIRules/Documentation.md
 @AIRules/ref.md
-@AIRules/Playwright.md
+@AIRules/ChromeDevTools.md
 
 ## Project-Specific Rules
