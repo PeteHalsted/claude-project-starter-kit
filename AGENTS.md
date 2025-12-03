@@ -11,6 +11,7 @@ This file provides guidance to AI agents when working with code in this reposito
 @AIRules/development-guidelines.md
 @AIRules/Documentation.md
 @AIRules/ChromeDevTools.md
+@AIRules/shadcn.md
 @AIRules/ref.md
 @AIRules/exa.md
 
