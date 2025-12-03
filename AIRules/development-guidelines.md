@@ -7,6 +7,34 @@
 ### Code Quality & TypeScript Implementation
 - **Type Safety**: Always include TypeScript types for function parameters and return values
 - Maintain type safety throughout the application
+- **Boolean Assignment**: When assigning to boolean variables using chained `&&` operators, use strict boolean conversion with `!!()`:
+  ```typescript
+  // ❌ WRONG - assigns truthy/falsy values (undefined, null, objects, etc.)
+  const isValid = user && user.email && user.verified;
+  
+  // ✅ CORRECT - always assigns true or false
+  const isValid = !!(user && user.email && user.verified);
+  ```
+  This is critical for: test result tracking, conditional logic, state management, and any code expecting strict boolean values.
+
+## Debugging & Troubleshooting
+
+### Debugging Philosophy: New Code is Guilty Until Proven Innocent
+When investigating bugs or test failures, **always assume new code is the problem first**:
+
+1. **Start with Recent Changes**: Examine code added/modified in the last session or PR first
+2. **Trust Stable Infrastructure**: Assume well-tested, production code (weeks/months old) is correct
+3. **Prove Innocence**: Only investigate stable code after definitively ruling out new code
+4. **Question Your Assumptions**: When a user says "this has been stable for weeks", they're probably right
+
+**Example**: If tests are failing after adding new features, check the new test code before blaming the test framework that's been running hundreds of tests successfully.
+
+### Debugging Workflow
+1. Identify when the issue first appeared (new code vs. existing code)
+2. Review recent changes in affected areas
+3. Check for common pitfalls (boolean assignment, type coercion, async issues)
+4. Use logging to verify assumptions
+5. Only after exhausting new code investigation, examine stable infrastructure
 
 ## Structured Logging & Debugging (Adze)
 All logging MUST be done using the Adze logger as specified in `project-documentation/logging-with-adze.md`.
@@ -101,6 +129,26 @@ When making UI changes, you MUST:
 - `npm run db:generate`: Generate a new database migration.
 - `npm run db:migrate`: Apply pending migrations.
 - `npm run check-types`: Run TypeScript type checking.
+
+### Database Query Access (psql)
+
+**Direct Database Queries**: Use `psql` for quick database queries and data exports instead of writing Node.js scripts.
+
+**Environment Setup**: The `.env` file contains both production and development DATABASE_URL entries. One is always commented out for easy switching between environments.
+
+**Query Pattern**:
+```bash
+# Extract active DATABASE_URL (strips inline comments after ##)
+DATABASE_URL=$(grep "^DATABASE_URL=" .env | cut -d'=' -f2- | cut -d'#' -f1 | xargs)
+
+# Run query
+psql "$DATABASE_URL" -c "SELECT * FROM tablename;"
+
+# Export to CSV
+psql "$DATABASE_URL" -c "\copy tablename TO 'export.csv' CSV HEADER;"
+```
+
+**AI Agent Restrictions**: AI agents MUST NEVER run drizzle commands (`npm run db:generate`, `npm run db:migrate`, `npm run db:push`). These require human interaction due to interactive prompts and data risks. For read-only queries and exports, use `psql` as shown above.
 
 ## Code Health & Refactoring
 - **Automated Formatting**: All code must be formatted using Biome (`npm run format`) to ensure consistent style.

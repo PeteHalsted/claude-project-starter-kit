@@ -1,0 +1,172 @@
+---
+name: gitpro
+description: Automate git workflows including quick checkpoints, conventional commits with changelog updates, branch renaming, merging, and branch creation. Use when the user requests checkpoint, commit, rename branch, merge, or create new branch operations.
+---
+
+# GitPro
+
+Git workflow automation for common operations with intelligent defaults and best practices.
+
+## Quick Start
+
+Invoke this skill when the user requests:
+- **"checkpoint"** or **"do a checkpoint"** - Quick timestamped safety commit
+- **"commit"** or **"do a commit"** - Full conventional commit with changelog
+- **"rename branch"** or **"rename the branch to X"** - Intelligent branch renaming
+- **"merge"** or **"merge the branch"** - Complete merge workflow
+- **"create new branch"** or **"create branch called X"** - Branch creation
+
+## Core Operations
+
+### Checkpoint - Quick Safety Commit
+
+Create fast timestamped commits during active work without analysis overhead.
+
+**When to use:**
+- User says "checkpoint" or "do a checkpoint" - Quick timestamped commit only
+- AI agents completing phases - Custom message with timestamp
+
+**Execution steps:**
+1. Run `git status` to check staged files
+2. If no files staged, run `git add -A` to stage all changes
+3. If nothing to commit, exit with message "No changes to checkpoint"
+4. Execute `scripts/get_timestamp.sh` to get local timezone timestamp
+5. Determine commit message format:
+   - **If invoked by user manually**: `[timestamp] Checkpoint`
+   - **If invoked by AI with custom message**: `[custom message] - [timestamp]`
+6. Run `git commit -m "[message]"` with appropriate format
+7. Report success to user
+
+**Key characteristics:**
+- No diff analysis required
+- No changelog updates
+- No conventional commit format
+- Fast execution for frequent use during development
+- Optional custom message prefix for workflow automation
+
+**Example outputs:**
+- Manual: `2025-10-29_16:23.45 Checkpoint`
+- With message: `Phase 3.1: Setup - 2025-10-29_16:23.45`
+- With message: `Pre-tasks baseline - 2025-10-29_16:23.45`
+
+### Commit - Comprehensive Conventional Commit
+
+Create full conventional commits with changelog integration and proper formatting.
+
+**When to use:** User says "commit" or "do a commit"
+
+**Execution steps:**
+1. Run `git status` to check current state
+2. Run `git add -A` to stage ALL changes (modifications, additions, deletions)
+3. Run `git diff --staged` to understand what is being committed
+4. Ask Technical Documentation Specialist agent to update `changelog.md` based on staged changes
+5. Run `git add changelog.md` to stage the updated changelog
+6. Analyze all changes to determine appropriate commit type
+7. Load `references/commit-types.md` for commit format guidance
+8. Create comprehensive commit message using format: `<emoji> <type>: <description>`
+9. **Version bumping (hotfix exception):**
+   - Check current branch with `git branch --show-current`
+   - **If on `main` branch AND commit is a fix/hotfix:**
+     - Run `cd apps/web && npm version patch` to bump version
+     - This auto-commits version change and creates git tag
+   - **Otherwise:** Skip version bumping (only done during merge workflow)
+10. Run `git commit -m "<message>"` to commit everything together (if version not already committed)
+11. Report success to user with commit message used
+
+**Key characteristics:**
+- Commits ALL changes together (no logical splitting)
+- Changelog always included in same commit
+- Uses conventional commit format with emojis
+- Comprehensive commit messages
+- **Hotfix exception:** Version bumps on `main` for fixes/hotfixes only
+
+**Example output:** `✨ feat: add user authentication with JWT tokens`
+
+### Rename Branch - Intelligent Branch Naming
+
+Rename current branch based on actual work being done.
+
+**When to use:** User says "rename branch" or "rename the branch to X"
+
+**Execution steps:**
+1. If user provided explicit name, skip to step 4
+2. Run `git diff main...HEAD` to see what changed
+3. Analyze changed files to determine descriptive branch name using kebab-case
+4. Run `git branch -m [new-branch-name]` to rename
+5. Run `git branch` to verify the rename
+6. Report new branch name to user
+
+**Branch naming convention:** Use kebab-case descriptive names (e.g., `client-onboarding-and-billing`, `fix-auth-redirect`, `feature-dashboard`)
+
+### Merge - Complete Merge Workflow
+
+Execute full merge workflow from commit through version bumping and creating new working branch.
+
+**When to use:** User says "merge" or "merge the branch"
+
+**Execution steps:**
+1. Run `git status` to check for uncommitted changes
+2. If changes exist, execute full Commit workflow first
+3. Get current branch name with `git branch --show-current`
+4. Run `git push origin [current-branch]` to push current branch
+5. Run `git checkout main` to switch to main
+6. Run `git pull` to update main
+7. Run `git merge [current-branch]` to merge
+8. **Intelligent version bumping:**
+   - Run `git log --oneline main~10..main` to analyze recent commits
+   - Determine version bump type by examining commit messages:
+     - **Major bump** if any commit contains: `BREAKING CHANGE`, `!` after type, or `major` in description
+     - **Minor bump** if any commit contains: `feat:`, `✨`, or `feature` indicators
+     - **Patch bump** otherwise (fixes, chores, docs, refactors)
+   - Run `cd apps/web && npm version [major|minor|patch]` based on analysis
+   - This automatically commits version change and creates git tag
+9. Run `git push && git push --tags` to push merged main with version tag
+10. Report success with summary of operations including version bump
+
+**Result:** Clean merge to main with automatic semantic version bump and fresh `working-title` branch ready for next feature.
+
+### New Branch - Create Working Branch
+
+Create new branch with specified or default name.
+
+**When to use:** User says "create new branch" or "create branch called X"
+
+**Execution steps:**
+1. Run `git status` to check for uncommitted changes
+2. If changes exist, ask user: "There are uncommitted changes. Commit or checkpoint first? (commit/checkpoint/continue)"
+3. If user chooses commit, execute Commit workflow
+4. If user chooses checkpoint, execute Checkpoint workflow
+5. Determine branch name: use provided name or default to `working-title`
+6. Run `git checkout -b [branch-name]` to create and switch
+7. Run `git push -u origin [branch-name]` to push and track
+8. Report success with new branch name
+
+**Default branch name:** `working-title`
+
+## Available Tools
+
+### GitHub CLI (`gh`)
+
+Verified available commands:
+- `gh repo view` - View repository information
+- `gh issue list` - List issues
+- `gh pr list` - List pull requests
+- `gh pr create` - Create pull request
+- Full authentication confirmed with proper token scopes
+
+Use GitHub CLI commands when operations require GitHub API interaction beyond basic git operations.
+
+### Helper Scripts
+
+**scripts/get_timestamp.sh**
+- Returns local timezone timestamp in format: `YYYY-MM-DD_HH:MM.SS`
+- Used for checkpoint commits
+- Execute with: `bash scripts/get_timestamp.sh`
+
+## References
+
+**references/commit-types.md**
+- Conventional commit types with emojis
+- Commit format guidelines
+- Best practices for commit messages
+- Load when creating commits for format reference

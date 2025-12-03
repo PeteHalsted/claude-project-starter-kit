@@ -8,6 +8,7 @@ The project includes Chrome DevTools MCP server which automatically enables brow
 - DO NOT ask the user to test, view console logs if you can do so yourself. ALWAYS test and iterate until you have a correct result
 - DO NOT close browser tabs unless explicitly instructed - the user is using them for testing!
 - Use Chrome DevTools for all browser testing, form interaction, and UI validation
+- **Authentication for Testing**: If testing requires login, check the `.env` file for test credentials (typically `TEST_ADMIN_EMAIL`, `TEST_ADMIN_PASSWORD`, `TEST_CLIENT_EMAIL`, `TEST_CLIENT_PASSWORD`)
 
 **Core Capabilities:**
 
