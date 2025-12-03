@@ -21,11 +21,11 @@ the shadcn mcp server supports frameworks and you should install the appropriate
 
 * React 
 ``` bash
-claude mcp add shadcn-ui npx @jpisnice/shadcn-ui-mcp-server
+claude mcp add shadcn-ui -- npx @jpisnice/shadcn-ui-mcp-server
 ```
 
 * React Native variant:
 
 ```bash
-claude mcp add shadcn-ui npx @jpisnice/shadcn-ui-mcp-server --framework react-native
+claude mcp add shadcn-ui -- npx @jpisnice/shadcn-ui-mcp-server --framework react-native
 ```
