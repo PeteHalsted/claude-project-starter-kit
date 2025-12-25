@@ -33,7 +33,6 @@ A developer workflow blueprint for AI-assisted development. This repository cont
 | `_claude-project/` | `project/.claude/` | Project-specific Claude commands and settings |
 | `_git-hooks/` | `project/.git/hooks/` | Git hooks (pre-commit, pre-merge) |
 | `_specify/` | `project/.specify/` | Spec-kit framework (constitution, templates, scripts) |
-| `_gemini/` | `project/.gemini/` | Google Gemini config (parallel to Claude) |
 | `airules/` | `project/AIRules/` | Modular AI behavior rules (imported via AGENTS.md) |
 | `bin/` | `~/bin/` (add to PATH) | CLI utilities (cl for YOLO mode, etc.) |
 | `project-documentation/` | `project/project-documentation/` | Documentation template structure |

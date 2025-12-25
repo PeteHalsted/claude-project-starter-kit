@@ -19,8 +19,8 @@ All notable changes to the Claude Project Starter Kit will be documented here.
   - `dot-Claude(Project)` → `_claude-project`
   - `dot-git-hooks(Project)` → `_git-hooks`
   - `dot-specify(Project)` → `_specify`
-  - `dot-gemini(Project)` → `_gemini`
   - `AIRules` → `airules`
+- **Removed Gemini Support**: Deleted `_gemini/` folder (no longer supporting Google Gemini CLI)
 - **Typo Fix**: Corrected `project-documenation` → `project-documentation`
 
 #### Documentation Restructure
