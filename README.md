@@ -1,108 +1,181 @@
-# NextAge Designs Client Portal *** This is an example and should be updated for your project ***
+# Claude Project Starter Kit
 
-## Quick Overview
+A developer workflow blueprint for AI-assisted development. This repository contains standardized configurations for Claude Code, Git hooks, development rules, and automation scripts that can be synced across multiple projects.
 
-**mysite.nextagedesigns.com** is a hosting client portal and admin management system for NextAge Designs.
+## What This Is
 
-**Target Users:**
-- NextAge Designs hosting clients (billing/account management, hosting dashboard)  
-- NextAge Designs staff (admin functions, prospect management, hosting services)
-
-## Essential Tech Stack
-
-- **Frontend**: TanStack Start + React + TypeScript (port 3001)
-- **Backend**: Hono + Node.js + PostgreSQL (port 3000)
-- **Auth**: Clerk with RBAC (admin/client roles)
-- **API**: oRPC for type-safe communication
-- **UI**: shadcn/ui + TailwindCSS
-- **Database**: PostgreSQL with Drizzle ORM
+- **Blueprint Repository**: Defines your standard development setup and AI agent behaviors
+- **Sync Source**: Central location for configurations that should be consistent across projects
+- **Template Collection**: Starting points for project-specific files that get customized
 
 ## Quick Start
 
+### For New Projects
+
+1. Clone/copy this starter kit to reference
+2. Copy the folders to their destinations (see Folder Structure below)
+3. Customize template files (`AGENTS.md`, `constitution.md`) for your project
+4. Update `AGENTS.md` imports to enable/disable rules for your project
+
+### For Existing Projects
+
+1. Copy `airules/` folder to your project root as `AIRules/`
+2. Copy `_claude-project/` contents to your project's `.claude/` folder
+3. Copy `_git-hooks/` contents to your project's `.git/hooks/` folder
+4. Create `CLAUDE.md` and `AGENTS.md` in project root (use templates here)
+5. Customize the imports in `AGENTS.md` for your needs
+
+## Folder Structure
+
+| Folder | Destination | Purpose |
+|--------|-------------|---------|
+| `_claude-global/` | `~/.claude/` | Global Claude Code config (skills, hooks, agents) |
+| `_claude-project/` | `project/.claude/` | Project-specific Claude commands and settings |
+| `_git-hooks/` | `project/.git/hooks/` | Git hooks (pre-commit, pre-merge) |
+| `_specify/` | `project/.specify/` | Spec-kit framework (constitution, templates, scripts) |
+| `_gemini/` | `project/.gemini/` | Google Gemini config (parallel to Claude) |
+| `airules/` | `project/AIRules/` | Modular AI behavior rules (imported via AGENTS.md) |
+| `bin/` | `~/bin/` (add to PATH) | CLI utilities (cl for YOLO mode, etc.) |
+| `project-documentation/` | `project/project-documentation/` | Documentation template structure |
+
+## File Classification
+
+Understanding which files sync vs which are templates is critical for the sync system:
+
+### Core Files (Bi-Directional Sync)
+These should be identical across all projects:
+- `airules/*.md` - All AI behavior rules
+- `bin/*` - CLI utilities
+- `_claude-global/` - Global Claude config (skills, hooks, output styles)
+- `_git-hooks/` - Git hooks
+
+### Template Files (One-Way: Starter Kit to Project)
+Starting points that get customized per project:
+- `AGENTS.md` - Import list (toggle rules on/off per project)
+- `CLAUDE.md` - Entry point (usually just imports AGENTS.md)
+- `readme.md` - Project README structure
+- `changelog.md` - Changelog format
+- `_specify/memory/constitution.md` - Project rules and constraints
+- `_claude-project/settings.local.json` - Project-specific settings
+
+### Project-Specific (Never Sync)
+Files that exist only in real projects:
+- `.env` files
+- `package.json`, `node_modules/`
+- Source code
+- Active `.specify/features/` directories
+
+## Key Components
+
+### AIRules (Modular Behavior Rules)
+
+The `airules/` folder contains markdown files that define AI agent behavior. Enable/disable them via imports in `AGENTS.md`:
+
+| File | Purpose |
+|------|---------|
+| `bashtools.md` | Shell tooling standards (fd, rg, ast-grep, jq) |
+| `git.md` | Git workflow rules (mandates gitpro skill) |
+| `development-guidelines.md` | Code quality, TypeScript, responsive design |
+| `Documentation.md` | Where to store documentation |
+| `ChromeDevTools.md` | Browser automation guidelines |
+| `shadcn.md` | shadcn/ui component integration |
+| `ref.md` | API/library doc lookup via Ref MCP |
+| `exa.md` | Web research via Exa MCP |
+
+### Skills (Global Claude Capabilities)
+
+Located in `_claude-global/skills/`:
+
+| Skill | Purpose |
+|-------|---------|
+| `gitpro` | Git operations with conventional commits and changelog |
+| `systematic-debugging` | 4-phase debugging framework |
+| `dispatching-parallel-agents` | Run concurrent subagents |
+| `verification-before-completion` | Verify before claiming done |
+| `frontend-design` | Production-grade UI development |
+
+### Hooks (Safety Guards)
+
+Located in `_claude-global/hooks/`:
+- `git-guard.sh` - Blocks dangerous git commands (forces gitpro skill)
+- `block-db-commands.sh` - Blocks Drizzle commands (requires human)
+
+## Tech Stack Context
+
+This starter kit is optimized for:
+- **Language**: TypeScript
+- **Frontend**: React, TanStack Start, shadcn/ui, TailwindCSS
+- **Backend**: TanStack Start (unified) or Hono (separate API)
+- **Database**: PostgreSQL (Neon DB), Drizzle ORM
+- **Auth**: Clerk with RBAC (or BetterAuth)
+- **Runtime**: Node.js (considering Bun)
+
+Adjust the rules and constitution for your specific stack.
+
+## Installation
+
+### Global Setup (One Time)
+
 ```bash
-npm install              # Install dependencies
-npm run dev             # Start both frontend (3001) + backend (3000)
-npm run db:push         # Apply database schema
-npm run check           # Format/lint code
+# Copy global Claude config
+cp -r _claude-global/* ~/.claude/
+
+# Add bin to PATH (add to ~/.zshrc)
+export PATH="$HOME/bin:$PATH"
+
+# Copy bin utilities
+cp -r bin/* ~/bin/
 ```
 
-This runs both services concurrently with labeled, color-coded output:
-- **Frontend**: Vite dev server with Hot Module Replacement
-- **Backend**: tsx watch for automatic restart on file changes
-
-Open [http://localhost:3001](http://localhost:3001) to view the application.
-
-## Environment Setup
-
-**Frontend (`apps/web/.env`):**
-- `VITE_SERVER_URL` - Backend API URL (http://localhost:3000)
-- `VITE_CLERK_PUBLISHABLE_KEY` - Clerk publishable key
-
-**Backend (`apps/server/.env`):**  
-- `DATABASE_URL` - PostgreSQL connection string
-- `CLERK_SECRET_KEY` - Clerk secret key for server-side auth
-- `CLERK_PUBLISHABLE_KEY` - Clerk publishable key
-- `CORS_ORIGIN` - Frontend URL for CORS (http://localhost:3001)
-
-## Core Commands
+### Per-Project Setup
 
 ```bash
-# Development
-npm run dev             # Start both frontend + backend
-npm run dev:web        # Start only frontend (port 3001)
-npm run dev:server     # Start only backend (port 3000)
+# In your project root
+cp -r /path/to/starter-kit/airules ./AIRules
+cp -r /path/to/starter-kit/_claude-project/.  ./.claude/
+cp -r /path/to/starter-kit/_git-hooks/* ./.git/hooks/
+cp -r /path/to/starter-kit/_specify ./.specify
 
-# Database
-npm run db:push        # Push schema changes to PostgreSQL
-npm run db:studio      # Open Drizzle Studio for database management
+# Create entry point files
+cp /path/to/starter-kit/CLAUDE.md ./CLAUDE.md
+cp /path/to/starter-kit/AGENTS.md ./AGENTS.md
 
-# Code Quality
-npm run check          # Run Biome formatting and linting
-npm run check-types    # TypeScript compilation check
-
-# Testing
-npm test               # Run all tests
-npm run test:services  # Test external service connections
+# Customize AGENTS.md imports for your project
 ```
 
-## Project Structure
+## For AI Agents
 
-This is a **monorepo** using npm workspaces:
+This section provides context for Claude and other AI agents working on this repository.
 
-```
-mysite.nextagedesigns/
-├── apps/
-│   ├── web/                    # Frontend (TanStack Start + React)
-│   └── server/                 # Backend (Hono API server)
-├── project-documentation/       # Complete project documentation
-├── package.json                # Root workspace configuration
-├── CLAUDE.md                   # Claude Code instructions
-└── README.md                   # This file - project overview
-```
+**This is a meta-repository** - it defines configurations and rules for OTHER projects. When working here:
 
-## Authentication & Security
+1. **You are editing templates** that will be copied to real projects
+2. **Changes here propagate** to multiple projects via sync (Phase 2)
+3. **The constitution here** is a template - real projects have customized versions
+4. **Test changes carefully** - they affect all synced projects
 
-- **Clerk Authentication** with role-based access control
-- **Protected Routes** with server-side route guards
-- **JWT Token Flow** with secure session management
-- **Admin/Client Separation** with feature-level permissions
+**Key files to understand:**
+- `AGENTS.md` - Central import hub for all AI rules
+- `_specify/memory/constitution.md` - Base project rules template
+- `airules/*.md` - Individual behavior rule modules
 
-## Documentation
+**When adding new rules:**
+1. Create new `.md` file in `airules/`
+2. Document the import line for `AGENTS.md`
+3. Consider if it should be on by default or commented out
 
-For detailed information, see `project-documentation/`:
+## Sync System (Phase 2 - Planned)
 
-- **`technical-architecture.md`** - Complete tech stack and system design
-- **`external-services-setup.md`** - Service configuration and environment setup
-- **`developer-handbook.md`** - Development commands and workflow
-- **`coding-standards.md`** - Development standards and practices
-- **`clerk-authentication/`** - Authentication architecture and guides
+A sync system is being developed to:
+- Pull changes from real projects into this starter kit
+- Push updates to all registered projects
+- Handle conflicts interactively
+- Respect file classification (synced vs template)
 
-## Getting Started
+See `project-documentation/sync-system-planning.md` for details.
 
-1. **Install dependencies**: `npm install`
-2. **Setup PostgreSQL database** and update `apps/server/.env`
-3. **Add Clerk keys** to both `.env` files
-4. **Push database schema**: `npm run db:push`
-5. **Start development**: `npm run dev`
+## Related Files
 
-The application will be available at http://localhost:3001 with the API at http://localhost:3000.
+- `CLAUDE.md` - Entry point, imports AGENTS.md
+- `AGENTS.md` - Central hub for all AI rule imports
+- `changelog.md` - Change history for this starter kit

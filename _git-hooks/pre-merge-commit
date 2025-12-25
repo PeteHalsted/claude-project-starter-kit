@@ -1,0 +1,43 @@
+#!/bin/bash
+# Pre-merge hook: Detect orphaned TODO beads before merging
+#
+# This hook can be used globally across all repositories.
+# It only activates in projects using beads (checks for .beads directory).
+#
+# Runs before merge commits to catch orphaned beads (beads exist but TODO comments removed)
+
+# Only run if this project uses beads
+if [ ! -d ".beads" ]; then
+    exit 0
+fi
+
+echo "🧹 Checking for orphaned TODO beads..."
+
+# Find orphaned beads
+ORPHANED=$(bd list --json 2>/dev/null | jq -r '.[] | select(.title | contains("TODO") or contains("Complete:") or contains("FIXME") or contains("HACK")) | select(.status == "open") | .id' | while read BEAD_ID; do
+  # Search for bead ID in TODO comments
+  if ! rg "TODO\($BEAD_ID\)|FIXME\($BEAD_ID\)|HACK\($BEAD_ID\)|XXX\($BEAD_ID\)" --type ts --type js >/dev/null 2>&1; then
+    echo "$BEAD_ID"
+  fi
+done)
+
+if [[ -n "$ORPHANED" ]]; then
+  echo ""
+  echo "❌ ERROR: Orphaned TODO beads found:"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "$ORPHANED" | while read BEAD_ID; do
+    TITLE=$(bd list --json 2>/dev/null | jq -r --arg id "$BEAD_ID" '.[] | select(.id == $id) | .title')
+    echo "$BEAD_ID - $TITLE"
+  done
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "These beads exist but their TODO comments are not in the code."
+  echo ""
+  echo "Fix by closing orphaned beads:"
+  echo "  bd close <bead-id> --reason \"TODO comment removed without closing bead\""
+  echo ""
+  exit 1
+fi
+
+echo "✅ No orphaned TODO beads found"
+exit 0

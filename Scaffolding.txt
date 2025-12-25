@@ -1,1 +1,0 @@
-npx create-start-app@latest my-app --tailwind --package-manager npm --add-ons shadcn,tanstack-query,clerk,neon
