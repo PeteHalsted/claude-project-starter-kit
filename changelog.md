@@ -13,6 +13,32 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ### December 25, 2025
 
+#### Global Config Sync Implementation
+- **`/sync-global` Command**: Implemented AI-assisted sync between `_claude-global/` and `~/.claude/`
+  - Master mode detection via `.claude/master.txt` marker file
+  - Whitelist approach: only watches hooks/, skills/, Agents/, commands/, settings.json, statusline.sh
+  - Compares MD5 hashes, analyzes diffs, proposes actions with user approval
+- **Documentation**: Updated `project-documentation/sync-system-planning.md` with implementation details
+
+#### Global Config Cleanup
+- **Removed Unused Skills**: Deleted skills no longer in use:
+  - dispatching-parallel-agents, feature-documentation-cleanup, frontend-design
+  - receiving-code-review, requesting-code-review, root-cause-tracing
+  - skill-creator, subagent-driven-development, systematic-debugging, verification-before-completion
+- **Removed Output Styles**: Deleted CriticalReview.md, task-adaptive.md
+- **Removed Agents**: Deleted code-reviewer.md agent
+- **Removed Commands**: Deleted code-review.md command
+- **Cleaned GitPro**: Removed backup files and analysis document, updated ENFORCEMENT.md
+
+#### New Hooks
+- **architect_enforcer.sh**: UserPromptSubmit hook for principal engineer persona
+- **dev-server-guard.sh**: Prevents AI from starting/killing dev server
+
+#### Settings Updates
+- Added `typescript-lsp@claude-plugins-official` plugin
+
+---
+
 #### Folder Naming Convention Overhaul
 - **Underscore Prefix Convention**: Renamed all "dot-" folders to use underscore prefix for cleaner naming:
   - `dot-Claude(Global)` → `_claude-global`

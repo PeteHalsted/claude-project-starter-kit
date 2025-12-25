@@ -61,6 +61,7 @@ Create fast timestamped commits during active work without analysis overhead.
 - No diff analysis required
 - No changelog updates
 - No conventional commit format
+- No TypeScript or toast validation (speed over compliance)
 - Fast execution for frequent use during development
 - Optional custom message prefix for workflow automation
 
@@ -78,42 +79,82 @@ Create full conventional commits with changelog integration and proper formattin
 **Execution steps:**
 1. Run `git status` to check current state
 2. Run `GITPRO_RUNNING=1 git add -A` to stage ALL changes (modifications, additions, deletions)
-3. Run `git diff --staged` to understand what is being committed
+3. Run `git diff --staged --name-only` to get list of changed files
 4. **Conditional changelog update:**
    - Check if `changelog.md` exists in the repository root
    - **If changelog.md exists:**
      - Read first 30-50 lines to understand date format and entry pattern
      - Add new entry at top for today's date following the established pattern
-     - Summarize the staged changes (already known from step 3's diff analysis)
+     - Summarize the staged changes
      - Run `GITPRO_RUNNING=1 git add changelog.md` to stage the updated changelog
    - **If changelog.md does NOT exist:**
      - Skip changelog update
      - Add note to final report: "No changelog updated (changelog.md not found in repository)"
-5. Analyze all changes to determine appropriate commit type
-6. Load `~/.claude/skills/gitpro/references/commit-types.md` for commit format guidance
-7. Create comprehensive commit message using format: `<emoji> <type>: <description>`
-8. **Version bumping (hotfix exception):**
-   - Check current branch with `git branch --show-current`
-   - **If on `main` branch AND commit is a fix/hotfix:**
-     - Run `cd apps/web && npm version patch` to bump version
-     - This auto-commits version change and creates git tag
-   - **Otherwise:** Skip version bumping (only done during merge workflow)
-9. Run `GITPRO_RUNNING=1 git commit -m "<message>"` to commit everything together (if version not already committed)
-10. **Automatic push (non-main branches only):**
-   - Get current branch with `git branch --show-current`
-   - **If NOT on `main` branch:**
-     - Run `GITPRO_RUNNING=1 git push` (or `GITPRO_RUNNING=1 git push -u origin [branch-name]` if no upstream)
-     - Report successful commit and push to user
-   - **If on `main` branch:**
-     - Skip automatic push to prevent unintended CI/CD triggers
-     - Report successful commit with reminder to manually push when ready
-11. Report success to user with commit message, push status, and changelog update status
+5. **TypeScript validation (BLOCKING):**
+   - Check if `project-documentation/typescript-debt-manifest.json` exists
+   - **If manifest exists:**
+     - Run `npm run check-types 2>&1` and capture output
+     - For each staged file that appears in the manifest baseline:
+       - Count current errors for that file
+       - Compare against baseline in manifest
+       - **If current > baseline:** STOP COMMIT with error:
+         ```
+         🚫 TYPESCRIPT ERROR INCREASE BLOCKED
+         
+         File: [filename]
+         Baseline errors: [N]
+         Current errors: [M]
+         
+         You MUST fix these errors before committing.
+         Adding 'any' types or '_' prefixes is FORBIDDEN.
+         See: project-documentation/typescript-debt-manifest.json
+         ```
+     - For new files not in manifest: errors are allowed (will be baselined on next manifest update)
+     - **If all files pass:** Continue with commit
+   - **If manifest does not exist:** Skip this check (project may not have adopted this policy)
+6. **Code quality validation (toast check - WARNING only):**
+   - Check if `package.json` contains a `lint:toast` script
+   - **If lint:toast exists:**
+     - Run `npm run lint:toast 2>&1 | head -20` to check for toast usage
+     - **If violations found:** Report warning in commit output:
+       ```
+       ⚠️ TOAST USAGE DETECTED in staged files
+       Toast messages are deprecated per Constitution Section XI.
+       Consider migrating to contextual feedback patterns.
+       See: project-documentation/contextual-feedback-over-toasts.md
+       ```
+     - Continue with commit (warning only, not blocking - progressive migration)
+   - **If lint:toast does not exist:** Skip this check
+7. Analyze all changes to determine appropriate commit type
+8. Load `~/.claude/skills/gitpro/references/commit-types.md` for commit format guidance
+9. Create comprehensive commit message using format: `<emoji> <type>: <description>`
+10. **Version bumping (hotfix exception):**
+    - Check current branch with `git branch --show-current`
+    - **If on `main` branch AND commit is a fix/hotfix:**
+      - Run `cd apps/web && npm version patch --no-git-tag-version` to bump version
+      - Capture new version from output
+      - Run `GITPRO_RUNNING=1 git add apps/web/package.json package-lock.json`
+      - Include version files in the commit (step 11)
+      - Run `GITPRO_RUNNING=1 git tag [version]` after commit
+    - **Otherwise:** Skip version bumping (only done during merge workflow)
+11. Run `GITPRO_RUNNING=1 git commit -m "<message>"` to commit everything together (if version not already committed)
+12. **Automatic push (non-main branches only):**
+    - Get current branch with `git branch --show-current`
+    - **If NOT on `main` branch:**
+      - Run `GITPRO_RUNNING=1 git push` (or `GITPRO_RUNNING=1 git push -u origin [branch-name]` if no upstream)
+      - Report successful commit and push to user
+    - **If on `main` branch:**
+      - Skip automatic push to prevent unintended CI/CD triggers
+      - Report successful commit with reminder to manually push when ready
+13. Report success to user with commit message, push status, changelog update status, TypeScript status, and any toast warnings
 
 **Key characteristics:**
 - Commits ALL changes together (no logical splitting)
 - Changelog included in same commit (if changelog.md exists in repository)
 - Uses conventional commit format with emojis
 - Comprehensive commit messages
+- **TypeScript validation:** BLOCKS commit if error count increases (per-file baseline)
+- **Toast validation:** Warns about deprecated toast usage (non-blocking)
 - **Hotfix exception:** Version bumps on `main` for fixes/hotfixes only
 - **Auto-push:** Automatically pushes to remote after commit (non-main branches only)
 - **Main branch safety:** Skips auto-push on `main` to prevent unintended CI/CD triggers
@@ -140,40 +181,63 @@ Rename current branch based on actual work being done.
 
 Execute full merge workflow from commit through version bumping and creating new working branch.
 
+**CRITICAL** This workflow must only push changes once when completely finished. If you push changes multiple times, you may trigger mutliple CI/ID pipelines that will conflict and cause a failure! 
+
 **When to use:** User says "merge" or "merge the branch"
 
 **Execution steps:**
 1. Run `git status` to check for uncommitted changes
-2. If changes exist, execute full Commit workflow first
+2. If changes exist, execute full Commit workflow first (includes TypeScript validation)
 3. Get current branch name with `git branch --show-current`
 4. Run `GITPRO_RUNNING=1 git push origin [current-branch]` to push current branch
 5. Run `git checkout main` to switch to main
 6. Run `git pull` to update main
 7. Run `GITPRO_RUNNING=1 git merge [current-branch]` to merge
-8. **Intelligent version bumping:**
+8. **Intelligent version bumping (MUST COMPLETE BEFORE PUSH):**
    - Run `git log --oneline main~10..main` to analyze recent commits
    - Determine version bump type by examining commit messages:
      - **Major bump** if any commit contains: `BREAKING CHANGE`, exclamation mark (!) after type, or `major` in description
      - **Minor bump** if any commit contains: `feat:`, `✨`, or `feature` indicators
      - **Patch bump** otherwise (fixes, chores, docs, refactors)
-   - Run `cd apps/web && npm version [major|minor|patch]` based on analysis
-   - This automatically commits version change and creates git tag
-9. Run `GITPRO_RUNNING=1 git push && GITPRO_RUNNING=1 git push --tags` to push merged main with version tag
+   - **Bump version (without auto-commit - monorepo compatibility):**
+     - Run `(cd apps/web && npm version [major|minor|patch] --no-git-tag-version)` to bump version
+     - **CRITICAL:** Use subshell `(cd ...)` to preserve working directory at project root
+     - Capture the new version number from output (e.g., `v1.5.1`)
+   - **Explicitly commit version bump from repo root:**
+     - **Verify you are at project root:** Run `pwd` - must be the monorepo root, NOT apps/web
+     - Run `GITPRO_RUNNING=1 git add apps/web/package.json package-lock.json`
+     - Run `GITPRO_RUNNING=1 git commit -m "🔖 chore: bump version to [version]"`
+     - Run `GITPRO_RUNNING=1 git tag [version]` (e.g., `v1.5.1`)
+   - **WAIT for this step to complete before proceeding to step 9**
+9. **Push main WITH version bump (after step 8 completes):**
+   - Run `GITPRO_RUNNING=1 git push` to push main (includes merge commit AND version bump commit)
+   - Run `GITPRO_RUNNING=1 git push --tags` to push version tags
+   - **CRITICAL:** Both the merge AND the version bump commit must be included in the push
 10. **Create fresh working-title branch (with safety check):**
-   - Check if `working-title` branch exists: `git branch --list working-title`
-   - **If working-title exists:**
-     - Check for unmerged commits: `git branch --no-merged main`
-     - **If working-title has unmerged commits:**
-       - STOP and report error: "⚠️ Cannot create working-title: existing branch has unmerged commits. Please rename, merge, or delete the old branch first."
-       - Exit merge workflow (main is already merged and pushed successfully)
-     - **If working-title is fully merged:**
-       - Delete old branch: `GITPRO_RUNNING=1 git branch -D working-title`
-       - Log: "Deleted old working-title branch (fully merged to main)"
-   - Create fresh working-title from current main: `GITPRO_RUNNING=1 git checkout -b working-title`
-   - Report: "✅ Created fresh working-title branch from main"
+    - Check if `working-title` branch exists: `git branch --list working-title`
+    - **If working-title exists:**
+      - Check for unmerged commits: `git branch --no-merged main`
+      - **If working-title has unmerged commits:**
+        - STOP and report error: "⚠️ Cannot create working-title: existing branch has unmerged commits. Please rename, merge, or delete the old branch first."
+        - Exit merge workflow (main is already merged and pushed successfully)
+      - **If working-title is fully merged:**
+        - **Check for beads worktree blocking deletion:**
+          - Run `git worktree list | grep working-title` to check if worktree exists
+          - If worktree exists: Run `git worktree remove .git/beads-worktrees/working-title --force 2>/dev/null || true`
+        - Delete old branch: `GITPRO_RUNNING=1 git branch -D working-title`
+        - Log: "Deleted old working-title branch (fully merged to main)"
+    - Create fresh working-title from current main: `GITPRO_RUNNING=1 git checkout -b working-title`
+    - Report: "✅ Created fresh working-title branch from main"
 11. Report success with summary of operations including version bump and new working branch
 
-**Result:** Clean merge to main with automatic semantic version bump and fresh `working-title` branch ready for next feature.
+**Result:** Clean merge to main with semantic version bump (single push includes both merge and version commits), plus fresh `working-title` branch ready for next feature.
+
+**Key characteristics:**
+- Single push to main (merge commit + version bump commit together)
+- Explicit git commands for version bump (monorepo-compatible, doesn't rely on npm auto-commit)
+- Automatic semantic version analysis from commit messages
+- Fresh working-title branch created from updated main
+- **Beads worktree cleanup:** Removes any beads worktrees that block branch deletion
 
 ### New Branch - Create Working Branch
 
@@ -192,6 +256,15 @@ Create new branch with specified or default name.
 8. Report success with new branch name
 
 **Default branch name:** `working-title`
+
+## Validation Summary
+
+| Check | Checkpoint | Commit | Merge |
+|-------|------------|--------|-------|
+| TypeScript errors | Skip | **BLOCKING** | Via Commit |
+| Toast usage | Skip | Warning | Via Commit |
+| Changelog update | Skip | Yes | Via Commit |
+| Version bump | Skip | Hotfix only | Yes |
 
 ## Available Tools
 

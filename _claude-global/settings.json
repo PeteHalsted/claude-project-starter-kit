@@ -1,10 +1,23 @@
 {
-  "statusLine": {
-    "type": "command",
-    "command": "~/.claude/statusline.sh",
-    "padding": 0
+  "permissions": {
+    "allow": [
+      "Skill(gitpro)"
+    ],
+    "defaultMode": "bypassPermissions"
   },
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/architect_enforcer.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -17,6 +30,11 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/git-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/dev-server-guard.sh",
             "timeout": 5
           }
         ]
@@ -33,9 +51,23 @@
             "type": "command",
             "command": "~/.claude/hooks/git-guard.sh",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/dev-server-guard.sh",
+            "timeout": 5
           }
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh",
+    "padding": 0
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-code-plugins": true,
+    "typescript-lsp@claude-plugins-official": true
   }
 }

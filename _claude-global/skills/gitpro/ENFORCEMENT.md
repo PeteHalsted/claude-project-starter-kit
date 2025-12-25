@@ -1,60 +1,65 @@
-# GitPro Skill Enforcement Documentation
+# GitPro Skill Enforcement
 
-This document explains the complete enforcement system for the gitpro skill.
+Claude doesn't always invoke skills when instructed. This hook physically blocks direct git commands to force skill usage.
 
-## Overview
+## How It Works
 
-The gitpro skill uses a **three-tier enforcement system**:
+**Three-tier enforcement:**
+1. **Skill Description** - Claude sees gitpro is available
+2. **CLAUDE.md/AGENTS.md** - Rules mandate gitpro usage
+3. **PreToolUse Hook** - Blocks direct git commands (fallback when Claude ignores rules)
 
-1. **Skill Description** - Improves discovery probability
-2. **CLAUDE.md Instructions** - Provides clear mandatory usage rules  
-3. **PreToolUse Hook** - Physically blocks direct git commands
+## Hook Location
 
-## Files Modified/Created
+`~/.claude/hooks/git-guard.sh`
 
-### Global Files (Apply to All Projects)
+Configured in `~/.claude/settings.json` under `PreToolUse` for both `Bash` and `mcp__acp__Bash` matchers.
 
-1. `~/.claude-code/hooks/git-guard.sh` - Hook script that blocks git commands
-2. `~/.claude/settings.json` - Activates the git-guard hook
-3. `~/.claude/skills/gitpro/SKILL.md` - Enhanced description emphasizing mandatory usage
-4. `~/.claude/skills/gitpro/ENFORCEMENT.md` - This documentation
+## What Gets Blocked
 
-### Project Files (Per-Project)
+| Command | Reason |
+|---------|--------|
+| `git add` | Use gitpro (handles staging) |
+| `git commit` | Use gitpro (changelog, conventional commits) |
+| `git push` | Use gitpro (auto-pushes after commit) |
+| `git merge` | Use gitpro (version bump, tags) |
+| `git checkout -b` | Use gitpro (branch creation) |
+| `git switch -b` | Use gitpro (branch creation) |
+| `git branch -m` | Use gitpro (branch rename) |
+| `git reset` | Destructive - use Read/Edit/Write instead |
+| `git restore` | Destructive - use Read/Edit/Write instead |
+| `git revert` | Requires explicit user instruction |
+| `git clean` | Requires explicit user instruction |
+| `git checkout <file>` | Destructive - use Read/Edit/Write instead |
 
-1. `CLAUDE.md` - Add ABSOLUTE RULE section for gitpro mandatory usage
+## What's Allowed (Read-Only)
 
-## Hook Configuration
+- `git status`
+- `git log`
+- `git diff`
+- `git show`
+- `git branch` (listing)
+- `git config`
+- `git remote`
+- `git tag` (listing)
+- `git rev-parse`
+- `git ls-files`
+- `git describe`
+- `git fetch`
+- `git stash`
+- `git reflog`
+- `git checkout <branch>` (switching, not file revert)
 
-The git-guard hook is configured in `~/.claude/settings.json`:
+## Environment Variables
 
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [{
-          "type": "command",
-          "command": "~/.claude-code/hooks/git-guard.sh",
-          "timeout": 5
-        }]
-      },
-      {
-        "matcher": "mcp__acp__Bash",
-        "hooks": [{
-          "type": "command",
-          "command": "~/.claude-code/hooks/git-guard.sh",
-          "timeout": 5
-        }]
-      }
-    ]
-  }
-}
-```
+| Variable | Purpose |
+|----------|---------|
+| `SKIP_GIT_GUARD=1` | Emergency bypass (user sets manually) |
+| `GITPRO_RUNNING=1` | Skill sets this so its own git commands pass |
 
 ## Emergency Override
 
-If gitpro has a bug and you need to bypass:
+If gitpro has a bug:
 
 ```bash
 export SKIP_GIT_GUARD=1
@@ -62,28 +67,14 @@ git commit -m "emergency fix"
 unset SKIP_GIT_GUARD
 ```
 
-## Testing
-
-### Test 1: Direct git commit (should block)
-Try: `git commit -m "test"`
-Expected: Hook denial message
-
-### Test 2: Git status (should allow)
-Try: `git status`
-Expected: Command executes normally
-
-### Test 3: Gitpro skill (should work)
-User says: "do a commit"
-Expected: Claude invokes gitpro skill successfully
-
 ## Troubleshooting
 
-If hook not working:
-1. Check file exists: `ls -la ~/.claude-code/hooks/git-guard.sh`
-2. Check executable: `chmod +x ~/.claude-code/hooks/git-guard.sh`
-3. Check settings: `cat ~/.claude/settings.json`
-4. Restart Claude Code
+1. Check hook exists: `ls -la ~/.claude/hooks/git-guard.sh`
+2. Check executable: `chmod +x ~/.claude/hooks/git-guard.sh`
+3. Check settings: `jq '.hooks.PreToolUse' ~/.claude/settings.json`
+4. Restart Claude Code after changes
 
 ## Version
 
-v1.0 (2025-11-13): Initial implementation
+- v1.0 (2025-11-13): Initial implementation
+- v1.1 (2025-12-25): Updated paths, added GITPRO_RUNNING, documented all blocked ops

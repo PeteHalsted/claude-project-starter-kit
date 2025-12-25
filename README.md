@@ -34,7 +34,6 @@ A developer workflow blueprint for AI-assisted development. This repository cont
 | `_git-hooks/` | `project/.git/hooks/` | Git hooks (pre-commit, pre-merge) |
 | `_specify/` | `project/.specify/` | Spec-kit framework (constitution, templates, scripts) |
 | `airules/` | `project/AIRules/` | Modular AI behavior rules (imported via AGENTS.md) |
-| `bin/` | `~/bin/` (add to PATH) | CLI utilities (cl for YOLO mode, etc.) |
 | `project-documentation/` | `project/project-documentation/` | Documentation template structure |
 
 ## File Classification
@@ -44,7 +43,6 @@ Understanding which files sync vs which are templates is critical for the sync s
 ### Core Files (Bi-Directional Sync)
 These should be identical across all projects:
 - `airules/*.md` - All AI behavior rules
-- `bin/*` - CLI utilities
 - `_claude-global/` - Global Claude config (skills, hooks, output styles)
 - `_git-hooks/` - Git hooks
 
@@ -88,16 +86,15 @@ Located in `_claude-global/skills/`:
 | Skill | Purpose |
 |-------|---------|
 | `gitpro` | Git operations with conventional commits and changelog |
-| `systematic-debugging` | 4-phase debugging framework |
-| `dispatching-parallel-agents` | Run concurrent subagents |
-| `verification-before-completion` | Verify before claiming done |
-| `frontend-design` | Production-grade UI development |
+
+Additional skills (e.g., `frontend-design`) are installed via the Claude Code plugin marketplace. See `project-documentation/claude-code-setup.md`.
 
 ### Hooks (Safety Guards)
 
 Located in `_claude-global/hooks/`:
 - `git-guard.sh` - Blocks dangerous git commands (forces gitpro skill)
 - `block-db-commands.sh` - Blocks Drizzle commands (requires human)
+- `dev-server-guard.sh` - Prevents AI from starting/killing dev server
 
 ## Tech Stack Context
 
@@ -113,17 +110,16 @@ Adjust the rules and constitution for your specific stack.
 
 ## Installation
 
+For complete Claude Code installation, configuration, and plugin setup, see `project-documentation/claude-code-setup.md`.
+
 ### Global Setup (One Time)
 
 ```bash
 # Copy global Claude config
 cp -r _claude-global/* ~/.claude/
 
-# Add bin to PATH (add to ~/.zshrc)
-export PATH="$HOME/bin:$PATH"
-
-# Copy bin utilities
-cp -r bin/* ~/bin/
+# Then install recommended plugins (from within Claude Code)
+# /plugin install frontend-design@claude-plugins-official
 ```
 
 ### Per-Project Setup

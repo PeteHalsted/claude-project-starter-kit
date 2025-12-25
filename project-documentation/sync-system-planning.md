@@ -231,15 +231,79 @@ This might be implemented as a Claude Code skill that wraps the sync tool.
 
 Start with **Option A (Shell Script)** for core sync logic, then optionally wrap it with **Option C (Claude Code Skill)** for AI-assisted conflict resolution.
 
-## Next Steps for Phase 2
+## Implemented: Global Claude Config Sync
 
-1. [ ] Create `sync-manifest.json` with file classifications
-2. [ ] Build `kit-sync` shell script with basic commands
-3. [ ] Implement registry file and management commands
-4. [ ] Add conflict resolution prompts
-5. [ ] Test with 2-3 real projects
-6. [ ] Document usage in README
-7. [ ] Optional: Create Claude Code skill wrapper
+### What's Done
+
+The `_claude-global/` ↔ `~/.claude/` sync is **fully implemented** via a Claude Code command.
+
+**Location**: `.claude/commands/sync-global.md`
+
+**Invoke**: Run `/sync-global` from Claude Code while in the starter kit directory.
+
+### Master Mode Detection
+
+A file `.claude/master.txt` determines sync direction:
+
+- **File exists** → MASTER MODE: Your `~/.claude/` is truth, kit gets updated
+- **File missing** → CONSUMER MODE: Starter kit is truth, your global gets updated
+
+The starter kit repo has this file, so running `/sync-global` here updates the kit from your global.
+
+### Whitelist Approach (Critical Design Decision)
+
+Instead of trying to exclude all the noise in `~/.claude/` (debug logs, project histories, caches, etc.), we use a **whitelist** of watched locations:
+
+**Folders** (full recursive):
+- `hooks/`
+- `skills/`
+- `Agents/` (if exists)
+- `commands/` (if exists)
+
+**Root files**:
+- `settings.json`
+- `statusline.sh`
+
+This means:
+1. New files added to watched folders are automatically detected
+2. Runtime noise (projects/, debug/, plugins/, file-history/, etc.) is ignored
+3. No need to update exclusion lists as Claude Code adds new cache directories
+
+### How It Works
+
+1. Command detects MASTER vs CONSUMER mode
+2. Lists files from watched locations in both kit and global
+3. Compares MD5 hashes to categorize: IDENTICAL, DIFFERS, MISSING_IN_GLOBAL, ONLY_IN_GLOBAL
+4. For differing files, AI reads both versions and explains what changed
+5. Proposes actions and waits for user approval
+6. Updates files only after explicit "yes"
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `.claude/commands/sync-global.md` | The sync command prompt |
+| `.claude/master.txt` | Mode detection marker (presence = master mode) |
+| `_claude-global/` | Starter kit's copy of global config |
+
+## Next Steps
+
+### Immediate: Perfect the Starter Kit Folders
+
+Before automating cross-project sync, ensure the starter kit folder structure is correct:
+
+1. [ ] Audit `_claude-global/` - remove any files that shouldn't be synced (backup files, etc.)
+2. [ ] Audit `airules/` - ensure all rules are current and useful
+3. [ ] Audit `_claude-project/` - clean up commands and settings
+4. [ ] Audit `_git-hooks/` - verify hooks are working
+5. [ ] Audit `_specify/` - ensure templates are current
+
+### Then: Cross-Project Sync
+
+1. [ ] Create similar command for project-level sync (airules/, _git-hooks/, etc.)
+2. [ ] Implement project registry
+3. [ ] Build push/pull workflows
+4. [ ] Handle path mappings (airules/ → AIRules/, etc.)
 
 ## Notes from Discovery Session
 
