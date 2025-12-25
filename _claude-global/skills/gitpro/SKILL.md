@@ -90,28 +90,7 @@ Create full conventional commits with changelog integration and proper formattin
    - **If changelog.md does NOT exist:**
      - Skip changelog update
      - Add note to final report: "No changelog updated (changelog.md not found in repository)"
-5. **TypeScript validation (BLOCKING):**
-   - Check if `project-documentation/typescript-debt-manifest.json` exists
-   - **If manifest exists:**
-     - Run `npm run check-types 2>&1` and capture output
-     - For each staged file that appears in the manifest baseline:
-       - Count current errors for that file
-       - Compare against baseline in manifest
-       - **If current > baseline:** STOP COMMIT with error:
-         ```
-         🚫 TYPESCRIPT ERROR INCREASE BLOCKED
-         
-         File: [filename]
-         Baseline errors: [N]
-         Current errors: [M]
-         
-         You MUST fix these errors before committing.
-         Adding 'any' types or '_' prefixes is FORBIDDEN.
-         See: project-documentation/typescript-debt-manifest.json
-         ```
-     - For new files not in manifest: errors are allowed (will be baselined on next manifest update)
-     - **If all files pass:** Continue with commit
-   - **If manifest does not exist:** Skip this check (project may not have adopted this policy)
+5. **TypeScript validation**: Handled by git pre-commit hook (zero tolerance). Gitpro does not duplicate this check.
 6. **Code quality validation (toast check - WARNING only):**
    - Check if `package.json` contains a `lint:toast` script
    - **If lint:toast exists:**
@@ -153,7 +132,7 @@ Create full conventional commits with changelog integration and proper formattin
 - Changelog included in same commit (if changelog.md exists in repository)
 - Uses conventional commit format with emojis
 - Comprehensive commit messages
-- **TypeScript validation:** BLOCKS commit if error count increases (per-file baseline)
+- **TypeScript validation:** Handled by git pre-commit hook (zero tolerance)
 - **Toast validation:** Warns about deprecated toast usage (non-blocking)
 - **Hotfix exception:** Version bumps on `main` for fixes/hotfixes only
 - **Auto-push:** Automatically pushes to remote after commit (non-main branches only)
@@ -261,7 +240,7 @@ Create new branch with specified or default name.
 
 | Check | Checkpoint | Commit | Merge |
 |-------|------------|--------|-------|
-| TypeScript errors | Skip | **BLOCKING** | Via Commit |
+| TypeScript errors | Skip | Via pre-commit hook | Via pre-commit hook |
 | Toast usage | Skip | Warning | Via Commit |
 | Changelog update | Skip | Yes | Via Commit |
 | Version bump | Skip | Hotfix only | Yes |

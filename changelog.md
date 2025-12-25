@@ -13,6 +13,17 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ### December 25, 2025
 
+#### AIRules System Restructure
+- **Constitution/Projectrules Split**: Separated global enforcement rules (constitution.md) from project-specific rules (projectrules.md)
+- **Development Guidelines Cleanup**: Consolidated documentation standards, removed duplicates, demoted "MUST" language to guidance
+- **Import Order Optimization**: Reordered AGENTS.md imports for LLM recency bias - constitution.md now loads last
+- **New Console.log Hook**: `block-console-log.sh` blocks console.log in Adze projects (PreToolUse on Edit/Write)
+- **Folder Rename**: `_git-hooks/` → `_git-hooks-project/` for naming consistency
+- **Removed**: `_specify/` folder (replaced by Opus 4.5 plan mode), `Documentation.md` (merged into dev-guidelines)
+- **Added**: `beads.md` (issue tracking), `ClaudeChrome.md` (browser automation), `projectrules.md` (template)
+- **Header Comments**: Added "what belongs here" comments to constitution, dev-guidelines, projectrules
+- **TypeScript Enforcement**: Zero tolerance via pre-commit hook, removed manifest system from gitpro skill
+
 #### Global Config Sync Implementation
 - **`/sync-global` Command**: Implemented AI-assisted sync between `_claude-global/` and `~/.claude/`
   - Master mode detection via `.claude/master.txt` marker file

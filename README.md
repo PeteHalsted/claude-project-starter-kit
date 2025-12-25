@@ -21,7 +21,7 @@ A developer workflow blueprint for AI-assisted development. This repository cont
 
 1. Copy `airules/` folder to your project root as `AIRules/`
 2. Copy `_claude-project/` contents to your project's `.claude/` folder
-3. Copy `_git-hooks/` contents to your project's `.git/hooks/` folder
+3. Copy `_git-hooks-project/` contents to your project's `.git/hooks/` folder
 4. Create `CLAUDE.md` and `AGENTS.md` in project root (use templates here)
 5. Customize the imports in `AGENTS.md` for your needs
 
@@ -31,8 +31,7 @@ A developer workflow blueprint for AI-assisted development. This repository cont
 |--------|-------------|---------|
 | `_claude-global/` | `~/.claude/` | Global Claude Code config (skills, hooks, agents) |
 | `_claude-project/` | `project/.claude/` | Project-specific Claude commands and settings |
-| `_git-hooks/` | `project/.git/hooks/` | Git hooks (pre-commit, pre-merge) |
-| `_specify/` | `project/.specify/` | Spec-kit framework (constitution, templates, scripts) |
+| `_git-hooks-project/` | `project/.git/hooks/` | Git hooks (TypeScript validation, beads sync) |
 | `airules/` | `project/AIRules/` | Modular AI behavior rules (imported via AGENTS.md) |
 | `project-documentation/` | `project/project-documentation/` | Documentation template structure |
 
@@ -44,7 +43,7 @@ Understanding which files sync vs which are templates is critical for the sync s
 These should be identical across all projects:
 - `airules/*.md` - All AI behavior rules
 - `_claude-global/` - Global Claude config (skills, hooks, output styles)
-- `_git-hooks/` - Git hooks
+- `_git-hooks-project/` - Git hooks
 
 ### Template Files (One-Way: Starter Kit to Project)
 Starting points that get customized per project:
@@ -52,7 +51,8 @@ Starting points that get customized per project:
 - `CLAUDE.md` - Entry point (usually just imports AGENTS.md)
 - `readme.md` - Project README structure
 - `changelog.md` - Changelog format
-- `_specify/memory/constitution.md` - Project rules and constraints
+- `airules/constitution.md` - Global rules
+- `airules/projectrules.md` - Project-specific rules template
 - `_claude-project/settings.local.json` - Project-specific settings
 
 ### Project-Specific (Never Sync)
@@ -60,7 +60,7 @@ Files that exist only in real projects:
 - `.env` files
 - `package.json`, `node_modules/`
 - Source code
-- Active `.specify/features/` directories
+- Active feature branches and work-in-progress
 
 ## Key Components
 
@@ -74,7 +74,10 @@ The `airules/` folder contains markdown files that define AI agent behavior. Ena
 | `git.md` | Git workflow rules (mandates gitpro skill) |
 | `development-guidelines.md` | Code quality, TypeScript, responsive design |
 | `Documentation.md` | Where to store documentation |
-| `ChromeDevTools.md` | Browser automation guidelines |
+| `ClaudeChrome.md` | Browser automation via Claude in Chrome |
+| `constitution.md` | Global rules (naming, quality, security) |
+| `projectrules.md` | Project-specific rules template |
+| `beads.md` | Issue tracking with beads CLI (optional) |
 | `shadcn.md` | shadcn/ui component integration |
 | `ref.md` | API/library doc lookup via Ref MCP |
 | `exa.md` | Web research via Exa MCP |
@@ -128,8 +131,7 @@ cp -r _claude-global/* ~/.claude/
 # In your project root
 cp -r /path/to/starter-kit/airules ./AIRules
 cp -r /path/to/starter-kit/_claude-project/.  ./.claude/
-cp -r /path/to/starter-kit/_git-hooks/* ./.git/hooks/
-cp -r /path/to/starter-kit/_specify ./.specify
+cp -r /path/to/starter-kit/_git-hooks-project/* ./.git/hooks/
 
 # Create entry point files
 cp /path/to/starter-kit/CLAUDE.md ./CLAUDE.md
@@ -151,7 +153,8 @@ This section provides context for Claude and other AI agents working on this rep
 
 **Key files to understand:**
 - `AGENTS.md` - Central import hub for all AI rules
-- `_specify/memory/constitution.md` - Base project rules template
+- `airules/constitution.md` - Global rules (apply to all projects)
+- `airules/projectrules.md` - Project-specific rules template
 - `airules/*.md` - Individual behavior rule modules
 
 **When adding new rules:**

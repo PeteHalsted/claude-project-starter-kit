@@ -58,6 +58,26 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/block-console-log.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/block-console-log.sh",
+            "timeout": 5
+          }
+        ]
       }
     ]
   },

@@ -17,6 +17,8 @@
 
 **ONLY Exception**: User explicitly says "revert the file" or "checkout the file" or "reset the changes"
 
+**Enforcement**: A PreToolUse hook will BLOCK these operations. If user explicitly requests a destructive git operation, they must set environment variable: `SKIP_GIT_GUARD=1`
+
 **Violation Consequences**: Using these commands without explicit instruction is a CRITICAL ERROR equivalent to data loss.
 
 ## Proactive Use of Subagents and Skills

@@ -24,7 +24,7 @@ These files should be identical across all projects. Changes flow both ways:
 airules/*.md              # All AI behavior rules
 bin/*                     # CLI utilities
 _claude-global/           # Global Claude config (skills, hooks, output styles)
-_git-hooks/               # Git hooks (pre-commit, pre-merge)
+_git-hooks-project/               # Git hooks (pre-commit, pre-merge)
 ```
 
 ### Category 2: Template Files (One-Way: Starter Kit → Project)
@@ -131,7 +131,7 @@ Define what syncs where:
       "airules/**/*.md",
       "bin/**/*",
       "_claude-global/**/*",
-      "_git-hooks/**/*"
+      "_git-hooks-project/**/*"
     ]
   },
   "templates": {
@@ -180,7 +180,7 @@ The folder names differ between starter kit and real projects:
 | `airules/` | `AIRules/` |
 | `_claude-global/` | `~/.claude/` |
 | `_claude-project/` | `.claude/` |
-| `_git-hooks/` | `.git/hooks/` |
+| `_git-hooks-project/` | `.git/hooks/` |
 | `_specify/` | `.specify/` |
 | `_gemini/` | `.gemini/` |
 
@@ -295,12 +295,12 @@ Before automating cross-project sync, ensure the starter kit folder structure is
 1. [ ] Audit `_claude-global/` - remove any files that shouldn't be synced (backup files, etc.)
 2. [ ] Audit `airules/` - ensure all rules are current and useful
 3. [ ] Audit `_claude-project/` - clean up commands and settings
-4. [ ] Audit `_git-hooks/` - verify hooks are working
+4. [ ] Audit `_git-hooks-project/` - verify hooks are working
 5. [ ] Audit `_specify/` - ensure templates are current
 
 ### Then: Cross-Project Sync
 
-1. [ ] Create similar command for project-level sync (airules/, _git-hooks/, etc.)
+1. [ ] Create similar command for project-level sync (airules/, _git-hooks-project/, etc.)
 2. [ ] Implement project registry
 3. [ ] Build push/pull workflows
 4. [ ] Handle path mappings (airules/ → AIRules/, etc.)
@@ -313,3 +313,65 @@ Before automating cross-project sync, ensure the starter kit folder structure is
 - Interactive prompts preferred over automatic decisions
 - Registry is needed because not all projects should sync (some are one-offs)
 - Current manual workflow: weekly/monthly attempts to freshen up starter kit, often falls behind
+
+---
+
+## Audit Progress Log
+
+### Session: 2025-12-25
+
+**Focus**: `airules/` folder audit (comparing with `mysite.nextagedesigns/AIRules/`)
+
+#### Files Analyzed
+
+| File | Status | Decision | Notes |
+|------|--------|----------|-------|
+| bashtools.md | ✅ IDENTICAL | Keep | No action needed |
+| ChromeDevTools.md | ✅ IDENTICAL | PENDING | mysite has ClaudeChrome.md which is more comprehensive |
+| development-guidelines.md | ✅ IDENTICAL | Keep | No action needed |
+| Documentation.md | ✅ IDENTICAL | Keep | No action needed |
+| exa.md | ✅ IDENTICAL | Keep | No action needed |
+| git.md | ⚠️ DIFFERS | PENDING | mysite is newer (Dec 18), adds 2 lines about enforcement |
+| ref.md | ✅ IDENTICAL | Keep | No action needed |
+| shadcn.md | ✅ IDENTICAL | Keep | No action needed |
+
+#### Files Only in mysite (Not in Starter Kit)
+
+| File | Size | Decision | Recommendation |
+|------|------|----------|----------------|
+| beads.md | 11KB | PENDING | Issue tracker rules - project-specific or template? |
+| ClaudeChrome.md | 7KB | PENDING | More comprehensive than ChromeDevTools.md - consider replacing |
+| context7.md | 949B | SKIP | Alternative to Ref MCP - not used in starter kit |
+| linear.md | 881B | SKIP | Project-specific (hardcoded project IDs) |
+| Playwright.md | 903B | PENDING | Alternative browser automation - optional add? |
+
+#### Decisions Made This Session
+
+- [x] git.md - PULLED from mysite (adds enforcement docs)
+- [x] ChromeDevTools.md - REMOVED, replaced by ClaudeChrome.md
+- [x] ClaudeChrome.md - ADDED to starter kit
+- [x] beads.md - ADDED to starter kit, commented out in AGENTS.md
+- [x] Playwright.md - REMOVED from mysite (deprecated)
+- [x] context7.md - REMOVED from mysite (deprecated)
+- [x] linear.md - REMOVED from mysite (deprecated)
+
+#### airules/ Audit Status: ✅ COMPLETE
+
+Both folders now in sync. Starter kit has 9 files, mysite has 9 files (identical set).
+
+---
+
+## Session Notes
+
+**User is driving** - Do not suggest next steps. User has the full plan in their head.
+
+### Decision: Eliminate _specify/
+
+**Rationale**: Opus 4.5 native plan mode has replaced the spec-kit workflow.
+
+**Action taken**:
+- Removed `_specify/` folder entirely from starter kit
+- Moved `constitution.md` to `airules/constitution.md` (using mysite version)
+- Updated AGENTS.md import path
+
+**constitution.md status**: Needs review - currently contains mysite-specific content (NextAge Designs, TanStack Start, Clerk, etc.). Needs to be genericized for starter kit template use.

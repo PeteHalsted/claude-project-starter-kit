@@ -1,0 +1,142 @@
+#!/bin/bash
+# Pre-commit hook: TypeScript validation + Beads sync + TODO tracking
+#
+# This hook enforces:
+# 1. TypeScript errors in staged files (BLOCKING - zero tolerance)
+# 2. Beads database sync (if beads is used)
+# 3. TODO comment validation (if beads is used)
+#
+# INSTALLATION (per-project, NOT global):
+#   cp _git-hooks/pre-commit .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+#
+# BYPASS OPTIONS:
+#   SKIP_TS_CHECK=1 git commit ...  # Skip TypeScript (used by gitpro checkpoints)
+#   SKIP_ALL_HOOKS=1 git commit ... # Skip everything (emergency only)
+
+# Emergency bypass
+[ "$SKIP_ALL_HOOKS" = "1" ] && exit 0
+
+# ============================================
+# PART 1: TYPESCRIPT VALIDATION (BLOCKING)
+# Zero tolerance for TypeScript errors in staged files
+# ============================================
+
+# Skip if bypass requested (checkpoints)
+if [ "$SKIP_TS_CHECK" != "1" ]; then
+    # Check if this is a TypeScript project
+    if [ -f "package.json" ] && grep -q '"check-types"' package.json 2>/dev/null; then
+        # Get staged TypeScript files
+        STAGED_TS=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$' || true)
+
+        if [ -n "$STAGED_TS" ]; then
+            echo "🔍 Checking TypeScript errors in staged files..."
+
+            # Run type check and capture output
+            TS_OUTPUT=$(npm run check-types 2>&1 || true)
+
+            # Filter errors to only staged files
+            STAGED_ERRORS=""
+            while IFS= read -r file; do
+                # Extract errors for this file (handles various tsc output formats)
+                FILE_ERRORS=$(echo "$TS_OUTPUT" | grep -E "^${file}[:(]" || true)
+                if [ -n "$FILE_ERRORS" ]; then
+                    STAGED_ERRORS="${STAGED_ERRORS}${FILE_ERRORS}"$'\n'
+                fi
+            done <<< "$STAGED_TS"
+
+            if [ -n "$STAGED_ERRORS" ]; then
+                echo ""
+                echo "🚫 TYPESCRIPT ERRORS BLOCKED"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                echo "$STAGED_ERRORS"
+                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+                echo ""
+                echo "You MUST fix ALL TypeScript errors before committing."
+                echo ""
+                echo "FORBIDDEN fixes (these hide problems, don't solve them):"
+                echo "  - _unusedVariable  → DELETE the unused code"
+                echo "  - : any            → Use proper types"
+                echo "  - // @ts-ignore    → Fix the underlying issue"
+                echo "  - as any           → Use type narrowing"
+                echo ""
+                echo "Bypass (checkpoint only): SKIP_TS_CHECK=1 git commit ..."
+                echo ""
+                exit 1
+            fi
+
+            echo "✅ No TypeScript errors in staged files"
+        fi
+    fi
+fi
+
+# ============================================
+# PART 2: BEADS SYNC
+# Only runs if this project uses beads
+# ============================================
+
+if [ -d ".beads" ]; then
+    if command -v bd >/dev/null 2>&1; then
+        # Import latest JSONL to database
+        if ! bd sync --import-only --no-git-history >/dev/null 2>&1; then
+            echo "Warning: Failed to import beads JSONL" >&2
+        fi
+
+        # Flush any pending DB changes to JSONL
+        if ! bd sync --flush-only >/dev/null 2>&1; then
+            echo "Warning: Failed to flush beads changes" >&2
+        fi
+
+        # Stage the JSONL if modified
+        [ -f ".beads/issues.jsonl" ] && git add ".beads/issues.jsonl" 2>/dev/null || true
+        [ -f ".beads/deletions.jsonl" ] && git add ".beads/deletions.jsonl" 2>/dev/null || true
+    fi
+
+    # ============================================
+    # PART 3: TODO VALIDATION
+    # Ensures all TODO comments have tracked beads
+    # ============================================
+
+    echo "🔍 Validating TODO tracking..."
+
+    INVALID_TODOS=$(rg "TODO\(|FIXME\(|HACK\(|XXX\(" \
+      --type ts --type js \
+      --line-number \
+      --no-heading \
+      --color never \
+      2>/dev/null | while IFS=: read -r file line comment; do
+
+      BEAD_ID=$(echo "$comment" | grep -oE '(TODO|FIXME|HACK|XXX)\(([a-z]+-[a-z0-9]+)\)' | grep -oE '[a-z]+-[a-z0-9]+')
+
+      if [[ -z "$BEAD_ID" ]]; then
+        echo "$file:$line - MISSING BEAD ID - $comment"
+      else
+        BEAD_STATUS=$(bd list --json 2>/dev/null | jq -r --arg id "$BEAD_ID" '.[] | select(.id == $id) | .status')
+
+        if [[ -z "$BEAD_STATUS" ]]; then
+          echo "$file:$line - BEAD NOT FOUND ($BEAD_ID) - $comment"
+        elif [[ "$BEAD_STATUS" == "closed" ]]; then
+          echo "$file:$line - BEAD CLOSED ($BEAD_ID) - $comment"
+        fi
+      fi
+    done)
+
+    if [[ -n "$INVALID_TODOS" ]]; then
+      echo ""
+      echo "❌ ERROR: Invalid TODO comments found:"
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      echo "$INVALID_TODOS"
+      echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+      echo ""
+      echo "Fix by:"
+      echo "  MISSING BEAD ID: Format must be TODO(xxx-NNN): description"
+      echo "  BEAD NOT FOUND: Create bead or remove comment"
+      echo "  BEAD CLOSED: Remove comment from code"
+      echo ""
+      exit 1
+    fi
+
+    echo "✅ All TODO comments tracked in beads"
+fi
+
+exit 0
