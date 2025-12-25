@@ -1,6 +1,6 @@
 #!/bin/bash
 # Custom Claude Code statusline - Pete Halsted
-# Line 1: Core info (directory, branch, version, model, style)
+# Line 1: Core info (directory, branch, version, model)
 # Line 2: Native Claude metrics (context, cost, duration, lines changed)
 # Line 3: ccusage output (5hr limits, burn rate)
 
@@ -56,11 +56,8 @@ version=$(echo "$input" | jq -r '.version // "N/A"')
 # Model
 model_display=$(echo "$input" | jq -r '.model.display_name // "N/A"')
 
-# Output style
-output_style=$(echo "$input" | jq -r '.output_style.name // "N/A"')
-
-printf '📁 %s%s%s  🌿 %s  📟 %s  🤖 %s  🎨 %s\n' \
-  "$(cyan)" "$current_dir" "$(rst)" "$git_branch" "$version" "$model_display" "$output_style"
+printf '📁 %s%s%s  🌿 %s  📟 %s  🤖 %s\n' \
+  "$(cyan)" "$current_dir" "$(rst)" "$git_branch" "$version" "$model_display"
 
 # ==========================================
 # LINE 2: NATIVE CLAUDE METRICS

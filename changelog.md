@@ -24,12 +24,21 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 - **Header Comments**: Added "what belongs here" comments to constitution, dev-guidelines, projectrules
 - **TypeScript Enforcement**: Zero tolerance via pre-commit hook, removed manifest system from gitpro skill
 
-#### Global Config Sync Implementation
-- **`/sync-global` Command**: Implemented AI-assisted sync between `_claude-global/` and `~/.claude/`
-  - Master mode detection via `.claude/master.txt` marker file
-  - Whitelist approach: only watches hooks/, skills/, Agents/, commands/, settings.json, statusline.sh
-  - Compares MD5 hashes, analyzes diffs, proposes actions with user approval
-- **Documentation**: Updated `project-documentation/sync-system-planning.md` with implementation details
+#### Complete Sync System
+- **`/sync-global` Command**: Sync between `_claude-global/` and `~/.claude/`
+  - Master mode detection via `.claude/master.txt`
+  - Whitelist approach for watched folders/files
+  - Executable bash script at `.claude/scripts/sync-global.sh`
+- **`/sync-starter-kit` Command**: Sync starter kit → any project
+  - Syncs AIRules/, git hooks, audits CLAUDE.md/AGENTS.md
+  - Path mapping: `airules/` → `AIRules/`, `_git-hooks-project/` → `.git/hooks/`
+  - Intelligent AGENTS.md merge (preserves enabled/disabled state)
+  - Executable bash script at `~/.claude/scripts/sync-starter-kit.sh`
+- **`/pull-from-project` Command**: Pull project changes → starter kit (master only)
+  - Compares project AIRules/ with kit airules/
+  - Shows diffs, asks which files to pull
+- **README**: Added Master Workflow section documenting maintainer commands
+- **Hooks Fix**: Made `architect_enforcer.sh` resilient to missing transcript
 
 #### Global Config Cleanup
 - **Removed Unused Skills**: Deleted skills no longer in use:

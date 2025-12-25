@@ -1,23 +1,19 @@
 #!/bin/bash
-set -euo pipefail
 
 # 1. Read the full context JSON from stdin
 INPUT_JSON=$(cat)
-TRANSCRIPT_PATH=$(echo "$INPUT_JSON" | jq -r ".transcript_path")
+TRANSCRIPT_PATH=$(echo "$INPUT_JSON" | jq -r ".transcript_path" 2>/dev/null)
 
 # 2. Analyze recent history for "Weak" behavior
-# We look at the last 3 assistant messages for "apology loops" or "mindless agreement"
-RECENT_HISTORY=$(grep '"role":"assistant"' "$TRANSCRIPT_PATH" | tail -n 3)
-
 IS_SYCOPHANTIC=false
-if echo "$RECENT_HISTORY" | grep -qE "You're (absolutely )?right|apologize|confusion|good point"; then
-    IS_SYCOPHANTIC=true
+if [[ -f "$TRANSCRIPT_PATH" ]]; then
+    RECENT_HISTORY=$(grep '"role":"assistant"' "$TRANSCRIPT_PATH" 2>/dev/null | tail -n 3 || true)
+    if echo "$RECENT_HISTORY" | grep -qE "You're (absolutely )?right|apologize|confusion|good point" 2>/dev/null; then
+        IS_SYCOPHANTIC=true
+    fi
 fi
 
-# 3. The "Injection"
-# If we detect weakness, we inject a "System Override" block.
-# This text appears to Claude as a high-priority system instruction inserted JUST NOW.
-
+# 3. Output appropriate injection
 if [ "$IS_SYCOPHANTIC" = "true" ]; then
     cat <<EOF
 <system_override priority="high">
@@ -31,8 +27,6 @@ CORRECTION REQUIRED:
 </system_override>
 EOF
 else
-    # Even if not sycophantic, we inject a subtle "temperature lowerer"
-    # to keep the tone dry and technical.
     cat <<EOF
 <system_note>
 Maintain "Principal Engineer" persona: Terseness favored. No pleasantries.
@@ -40,5 +34,4 @@ Maintain "Principal Engineer" persona: Terseness favored. No pleasantries.
 EOF
 fi
 
-# 4. Exit successfully to let the prompt proceed
 exit 0

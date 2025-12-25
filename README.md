@@ -10,27 +10,45 @@ A developer workflow blueprint for AI-assisted development. This repository cont
 
 ## Quick Start
 
-### For New Projects
+### First Time Setup (One Time)
 
-1. Clone/copy this starter kit to reference
-2. Copy the folders to their destinations (see Folder Structure below)
-3. Customize template files (`AGENTS.md`, `constitution.md`) for your project
-4. Update `AGENTS.md` imports to enable/disable rules for your project
+```bash
+# 1. Clone this starter kit
+git clone https://github.com/youruser/claude-project-starter-kit.git
 
-### For Existing Projects
+# 2. From the starter kit directory, run /sync-global in Claude Code
+# This installs global config AND configures the sync system
+cd claude-project-starter-kit
+# Then in Claude Code: /sync-global
+```
+
+### For New/Existing Projects
+
+From any project directory in Claude Code:
+```
+/sync-starter-kit
+```
+
+This command:
+- Syncs `AIRules/` folder (creates if missing)
+- Installs git hooks (makes executable)
+- Audits `CLAUDE.md` (warns if not minimal)
+- Intelligently merges `AGENTS.md` (preserves your enabled/disabled choices)
+
+### Manual Setup (Alternative)
+
+If you prefer manual control:
 
 1. Copy `airules/` folder to your project root as `AIRules/`
-2. Copy `_claude-project/` contents to your project's `.claude/` folder
-3. Copy `_git-hooks-project/` contents to your project's `.git/hooks/` folder
-4. Create `CLAUDE.md` and `AGENTS.md` in project root (use templates here)
-5. Customize the imports in `AGENTS.md` for your needs
+2. Copy `_git-hooks-project/` contents to `.git/hooks/` and `chmod +x`
+3. Create minimal `CLAUDE.md` (just `@AGENTS.md` import)
+4. Create `AGENTS.md` with imports for your project
 
 ## Folder Structure
 
 | Folder | Destination | Purpose |
 |--------|-------------|---------|
-| `_claude-global/` | `~/.claude/` | Global Claude Code config (skills, hooks, agents) |
-| `_claude-project/` | `project/.claude/` | Project-specific Claude commands and settings |
+| `_claude-global/` | `~/.claude/` | Global Claude Code config (skills, hooks) |
 | `_git-hooks-project/` | `project/.git/hooks/` | Git hooks (TypeScript validation, beads sync) |
 | `airules/` | `project/AIRules/` | Modular AI behavior rules (imported via AGENTS.md) |
 | `project-documentation/` | `project/project-documentation/` | Documentation template structure |
@@ -53,7 +71,6 @@ Starting points that get customized per project:
 - `changelog.md` - Changelog format
 - `airules/constitution.md` - Global rules
 - `airules/projectrules.md` - Project-specific rules template
-- `_claude-project/settings.local.json` - Project-specific settings
 
 ### Project-Specific (Never Sync)
 Files that exist only in real projects:
@@ -72,8 +89,7 @@ The `airules/` folder contains markdown files that define AI agent behavior. Ena
 |------|---------|
 | `bashtools.md` | Shell tooling standards (fd, rg, ast-grep, jq) |
 | `git.md` | Git workflow rules (mandates gitpro skill) |
-| `development-guidelines.md` | Code quality, TypeScript, responsive design |
-| `Documentation.md` | Where to store documentation |
+| `development-guidelines.md` | Code quality, TypeScript, documentation |
 | `ClaudeChrome.md` | Browser automation via Claude in Chrome |
 | `constitution.md` | Global rules (naming, quality, security) |
 | `projectrules.md` | Project-specific rules template |
@@ -117,28 +133,29 @@ For complete Claude Code installation, configuration, and plugin setup, see `pro
 
 ### Global Setup (One Time)
 
-```bash
-# Copy global Claude config
-cp -r _claude-global/* ~/.claude/
+From the starter kit directory in Claude Code:
+```
+/sync-global
+```
 
-# Then install recommended plugins (from within Claude Code)
-# /plugin install frontend-design@claude-plugins-official
+This:
+- Copies `_claude-global/*` to `~/.claude/` (hooks, skills, commands)
+- Configures starter kit path for `/sync-starter-kit` command
+- Installs the sync commands globally
+
+Then install recommended plugins:
+```
+/plugin install frontend-design@claude-plugins-official
 ```
 
 ### Per-Project Setup
 
-```bash
-# In your project root
-cp -r /path/to/starter-kit/airules ./AIRules
-cp -r /path/to/starter-kit/_claude-project/.  ./.claude/
-cp -r /path/to/starter-kit/_git-hooks-project/* ./.git/hooks/
-
-# Create entry point files
-cp /path/to/starter-kit/CLAUDE.md ./CLAUDE.md
-cp /path/to/starter-kit/AGENTS.md ./AGENTS.md
-
-# Customize AGENTS.md imports for your project
+From any project directory in Claude Code:
 ```
+/sync-starter-kit
+```
+
+See Quick Start above for what this does.
 
 ## For AI Agents
 
@@ -162,15 +179,41 @@ This section provides context for Claude and other AI agents working on this rep
 2. Document the import line for `AGENTS.md`
 3. Consider if it should be on by default or commented out
 
-## Sync System (Phase 2 - Planned)
+## Sync System
 
-A sync system is being developed to:
-- Pull changes from real projects into this starter kit
-- Push updates to all registered projects
-- Handle conflicts interactively
-- Respect file classification (synced vs template)
+Two commands keep projects in sync:
 
-See `project-documentation/sync-system-planning.md` for details.
+| Command | Run From | Direction | Purpose |
+|---------|----------|-----------|---------|
+| `/sync-global` | Starter kit | `~/.claude/` ↔ `_claude-global/` | Sync global Claude config |
+| `/sync-starter-kit` | Any project | Starter kit → Project | Update project from kit |
+
+**Key behaviors:**
+- Interactive prompts before any changes
+- Shows diffs for modified files
+- Intelligent `AGENTS.md` merge (preserves your choices)
+- Handles path mapping (`airules/` → `AIRules/`)
+
+See `project-documentation/sync-system-planning.md` for technical details.
+
+## Master Workflow (Maintainer Only)
+
+When you improve AIRules in a real project and want to bring changes back to the starter kit:
+
+```
+# From the starter kit directory in Claude Code
+/pull-from-project
+```
+
+This command:
+- Only works from starter kit (checks for `.claude/master.txt`)
+- Asks which project to pull from
+- Compares project `AIRules/` with kit `airules/`
+- Shows diffs, asks which files to pull
+- Skips `projectrules.md` (always project-specific)
+- Reminds to update `AGENTS.md` template for new imports
+
+After pulling, run `/sync-global` to push updated rules to `~/.claude/`.
 
 ## Related Files
 
