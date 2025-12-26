@@ -3,7 +3,7 @@ set -euo pipefail
 
 # sync-starter-kit.sh - Sync project with starter kit
 # Run from any project directory
-# Exit codes: 0 = has changes, 1 = error, 2 = no changes needed
+# Exit codes: 0 = success (check output for details), 1 = error
 
 CONFIG_FILE="$HOME/.claude/starter-kit-config.json"
 
@@ -310,12 +310,11 @@ main() {
 
     echo "=========================================="
     if [[ $total_changes -eq 0 ]]; then
-        success "All synced. No changes needed."
-        exit 2
+        success "✓ All synced. No changes needed."
     else
-        warn "Changes available. Review above and decide actions."
-        exit 0
+        warn "⚠ Changes available. Review above and decide actions."
     fi
+    exit 0
 }
 
 main "$@"

@@ -13,6 +13,11 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ### December 26, 2025
 
+#### Sync Script Fix
+- **Exit Code Fix**: `sync-starter-kit.sh` now exits 0 for both success cases (all synced / changes available)
+- **UX Improvement**: Prevents Claude Code from showing red "Error" text on successful sync operations
+- **Visual Indicators**: Added ✓ and ⚠ prefixes to distinguish outcomes
+
 #### Beads Hook-Based Integration
 - **Replaced `bd prime`**: Custom hook injection replaces upstream `bd prime` command
 - **New Hook System**: `beads-inject.sh` checks for `.beads/` and injects `beads-workflow.md`
