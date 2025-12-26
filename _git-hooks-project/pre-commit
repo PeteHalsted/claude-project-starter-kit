@@ -101,6 +101,7 @@ if [ -d ".beads" ]; then
 
     INVALID_TODOS=$(rg "TODO\(|FIXME\(|HACK\(|XXX\(" \
       --type ts --type js \
+      --glob '!**/node_modules/**' \
       --line-number \
       --no-heading \
       --color never \

@@ -13,6 +13,14 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ### December 26, 2025
 
+#### GitPro Beads Integration
+- **Added `bd sync` to gitpro**: Pre/post-commit beads sync when `.beads/` exists
+- **Removed Session Close Protocol**: Conflicted with gitpro workflow, now integrated directly
+- **pull-from-project enhanced**: Now compares git hooks in addition to AIRules
+
+#### Pre-commit Hook
+- **node_modules exclusion**: Added `--glob '!**/node_modules/**'` to TypeScript validation
+
 #### Sync Script Fix
 - **Exit Code Fix**: `sync-starter-kit.sh` now exits 0 for both success cases (all synced / changes available)
 - **UX Improvement**: Prevents Claude Code from showing red "Error" text on successful sync operations

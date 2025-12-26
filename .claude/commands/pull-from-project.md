@@ -1,6 +1,6 @@
 # Pull From Project
 
-Pull AIRules changes from a real project back into the starter kit. Master only.
+Pull AIRules and git hooks changes from a real project back into the starter kit. Master only.
 
 ## Step 1: Verify Master mode
 
@@ -37,7 +37,7 @@ if [[ ! -d "$PROJECT_PATH/AIRules" ]]; then
 fi
 ```
 
-## Step 4: Compare files
+## Step 4: Compare AIRules files
 
 ```bash
 for project_file in "$PROJECT_PATH/AIRules"/*.md; do
@@ -57,7 +57,25 @@ for project_file in "$PROJECT_PATH/AIRules"/*.md; do
 done
 ```
 
-## Step 5: For DIFFERS files
+## Step 5: Compare git hooks
+
+```bash
+# Only compare hooks that exist in starter kit (canonical set)
+for kit_hook in ./_git-hooks-project/*; do
+  hookname=$(basename "$kit_hook")
+  project_hook="$PROJECT_PATH/.git/hooks/$hookname"
+
+  if [[ ! -f "$project_hook" ]]; then
+    echo "MISSING IN PROJECT: $hookname"
+  elif diff -q "$kit_hook" "$project_hook" > /dev/null 2>&1; then
+    echo "IDENTICAL: $hookname"
+  else
+    echo "DIFFERS: $hookname"
+  fi
+done
+```
+
+## Step 6: For DIFFERS AIRules files
 
 Show diff and ask:
 ```bash
@@ -65,16 +83,30 @@ diff "./airules/$filename" "$PROJECT_PATH/AIRules/$filename"
 ```
 "Pull project version? (y/n)"
 
-## Step 6: For NEW files
+## Step 7: For NEW AIRules files
 
 Show first 30 lines, ask: "Add to starter kit? (y/n)"
 
-## Step 7: Apply
+## Step 8: For DIFFERS git hooks
+
+Show diff and ask:
+```bash
+diff "./_git-hooks-project/$hookname" "$PROJECT_PATH/.git/hooks/$hookname"
+```
+"Pull project version? (y/n)"
+
+## Step 9: Apply AIRules
 
 ```bash
 cp "$PROJECT_PATH/AIRules/$filename" "./airules/$filename"
 ```
 
-## Step 8: Remind
+## Step 10: Apply git hooks
 
-If NEW files added: "Update AGENTS.md template to include new import."
+```bash
+cp "$PROJECT_PATH/.git/hooks/$hookname" "./_git-hooks-project/$hookname"
+```
+
+## Step 11: Remind
+
+If NEW AIRules files added: "Update AGENTS.md template to include new import."

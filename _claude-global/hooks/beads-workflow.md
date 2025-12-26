@@ -2,21 +2,6 @@
 
 **IMPORTANT**: This project uses **bd (beads)** for persistent issue tracking. For command reference, run `bd --help` or `bd <command> --help`.
 
-## Session Close Protocol
-
-**CRITICAL**: Before ending a session, complete this checklist:
-
-```
-[ ] 1. git status              (check what changed)
-[ ] 2. git add <files>         (stage code changes)
-[ ] 3. bd sync                 (commit beads changes)
-[ ] 4. git commit -m "..."     (commit code)
-[ ] 5. bd sync                 (commit any new beads changes)
-[ ] 6. git push                (push to remote)
-```
-
-**Work is not done until pushed.**
-
 ## Beads vs TodoWrite
 
 | Tool | Use For |

@@ -78,9 +78,13 @@ Create full conventional commits with changelog integration and proper formattin
 
 **Execution steps:**
 1. Run `git status` to check current state
-2. Run `GITPRO_RUNNING=1 git add -A` to stage ALL changes (modifications, additions, deletions)
-3. Run `git diff --staged --name-only` to get list of changed files
-4. **Conditional changelog update:**
+2. **Beads sync (pre-commit):**
+   - Check if `.beads/` directory exists in repository root
+   - **If .beads/ exists:** Run `bd sync` to commit any pending beads changes
+   - **If .beads/ does not exist:** Skip this step
+3. Run `GITPRO_RUNNING=1 git add -A` to stage ALL changes (modifications, additions, deletions)
+4. Run `git diff --staged --name-only` to get list of changed files
+5. **Conditional changelog update:**
    - Check if `changelog.md` exists in the repository root
    - **If changelog.md exists:**
      - Read first 30-50 lines to understand date format and entry pattern
@@ -90,8 +94,8 @@ Create full conventional commits with changelog integration and proper formattin
    - **If changelog.md does NOT exist:**
      - Skip changelog update
      - Add note to final report: "No changelog updated (changelog.md not found in repository)"
-5. **TypeScript validation**: Handled by git pre-commit hook (zero tolerance). Gitpro does not duplicate this check.
-6. **Code quality validation (toast check - WARNING only):**
+6. **TypeScript validation**: Handled by git pre-commit hook (zero tolerance). Gitpro does not duplicate this check.
+7. **Code quality validation (toast check - WARNING only):**
    - Check if `package.json` contains a `lint:toast` script
    - **If lint:toast exists:**
      - Run `npm run lint:toast 2>&1 | head -20` to check for toast usage
@@ -104,20 +108,24 @@ Create full conventional commits with changelog integration and proper formattin
        ```
      - Continue with commit (warning only, not blocking - progressive migration)
    - **If lint:toast does not exist:** Skip this check
-7. Analyze all changes to determine appropriate commit type
-8. Load `~/.claude/skills/gitpro/references/commit-types.md` for commit format guidance
-9. Create comprehensive commit message using format: `<emoji> <type>: <description>`
-10. **Version bumping (hotfix exception):**
+8. Analyze all changes to determine appropriate commit type
+9. Load `~/.claude/skills/gitpro/references/commit-types.md` for commit format guidance
+10. Create comprehensive commit message using format: `<emoji> <type>: <description>`
+11. **Version bumping (hotfix exception):**
     - Check current branch with `git branch --show-current`
     - **If on `main` branch AND commit is a fix/hotfix:**
       - Run `cd apps/web && npm version patch --no-git-tag-version` to bump version
       - Capture new version from output
       - Run `GITPRO_RUNNING=1 git add apps/web/package.json package-lock.json`
-      - Include version files in the commit (step 11)
+      - Include version files in the commit (step 12)
       - Run `GITPRO_RUNNING=1 git tag [version]` after commit
     - **Otherwise:** Skip version bumping (only done during merge workflow)
-11. Run `GITPRO_RUNNING=1 git commit -m "<message>"` to commit everything together (if version not already committed)
-12. **Automatic push (non-main branches only):**
+12. Run `GITPRO_RUNNING=1 git commit -m "<message>"` to commit everything together (if version not already committed)
+13. **Beads sync (post-commit):**
+    - Check if `.beads/` directory exists in repository root
+    - **If .beads/ exists:** Run `bd sync` to commit any beads changes made during the session
+    - **If .beads/ does not exist:** Skip this step
+14. **Automatic push (non-main branches only):**
     - Get current branch with `git branch --show-current`
     - **If NOT on `main` branch:**
       - Run `GITPRO_RUNNING=1 git push` (or `GITPRO_RUNNING=1 git push -u origin [branch-name]` if no upstream)
@@ -125,7 +133,7 @@ Create full conventional commits with changelog integration and proper formattin
     - **If on `main` branch:**
       - Skip automatic push to prevent unintended CI/CD triggers
       - Report successful commit with reminder to manually push when ready
-13. Report success to user with commit message, push status, changelog update status, TypeScript status, and any toast warnings
+15. Report success to user with commit message, push status, changelog update status, TypeScript status, beads sync status, and any toast warnings
 
 **Key characteristics:**
 - Commits ALL changes together (no logical splitting)
@@ -134,6 +142,7 @@ Create full conventional commits with changelog integration and proper formattin
 - Comprehensive commit messages
 - **TypeScript validation:** Handled by git pre-commit hook (zero tolerance)
 - **Toast validation:** Warns about deprecated toast usage (non-blocking)
+- **Beads sync:** Automatic pre/post-commit sync (if .beads/ exists)
 - **Hotfix exception:** Version bumps on `main` for fixes/hotfixes only
 - **Auto-push:** Automatically pushes to remote after commit (non-main branches only)
 - **Main branch safety:** Skips auto-push on `main` to prevent unintended CI/CD triggers
@@ -243,6 +252,7 @@ Create new branch with specified or default name.
 | TypeScript errors | Skip | Via pre-commit hook | Via pre-commit hook |
 | Toast usage | Skip | Warning | Via Commit |
 | Changelog update | Skip | Yes | Via Commit |
+| Beads sync | Skip | If .beads/ exists | Via Commit |
 | Version bump | Skip | Hotfix only | Yes |
 
 ## Available Tools
