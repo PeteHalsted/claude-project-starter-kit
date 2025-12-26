@@ -49,7 +49,6 @@ You MUST perform intelligent analysis:
 @airules/exa.md
 @airules/development-guidelines.md
 @airules/git.md
-@airules/beads.md
 @airules/projectrules.md
 @airules/constitution.md
 ```

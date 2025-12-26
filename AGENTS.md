@@ -12,6 +12,5 @@ This file provides guidance to AI agents when working with code in this reposito
 @airules/exa.md
 @airules/development-guidelines.md
 @airules/git.md
-<!-- @airules/beads.md -->
 <!-- @airules/projectrules.md -->
 @airules/constitution.md

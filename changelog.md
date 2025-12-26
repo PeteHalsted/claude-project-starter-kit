@@ -11,6 +11,17 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ---
 
+### December 26, 2025
+
+#### Beads Hook-Based Integration
+- **Replaced `bd prime`**: Custom hook injection replaces upstream `bd prime` command
+- **New Hook System**: `beads-inject.sh` checks for `.beads/` and injects `beads-workflow.md`
+- **Deleted `airules/beads.md`**: Workflow now lives in `_claude-global/hooks/beads-workflow.md`
+- **Updated beads-setup.md**: Documents hook approach, opting out, release scanning workflow
+- **Workflow Improvements**: Added session close protocol, `bd close --suggest-next` (v0.37), TodoWrite clarification
+
+---
+
 ### December 25, 2025
 
 #### AIRules System Restructure

@@ -93,7 +93,6 @@ The `airules/` folder contains markdown files that define AI agent behavior. Ena
 | `ClaudeChrome.md` | Browser automation via Claude in Chrome |
 | `constitution.md` | Global rules (naming, quality, security) |
 | `projectrules.md` | Project-specific rules template |
-| `beads.md` | Issue tracking with beads CLI (optional) |
 | `shadcn.md` | shadcn/ui component integration |
 | `ref.md` | API/library doc lookup via Ref MCP |
 | `exa.md` | Web research via Exa MCP |
@@ -108,12 +107,14 @@ Located in `_claude-global/skills/`:
 
 Additional skills (e.g., `frontend-design`) are installed via the Claude Code plugin marketplace. See `project-documentation/claude-code-setup.md`.
 
-### Hooks (Safety Guards)
+### Hooks (Safety Guards & Context Injection)
 
 Located in `_claude-global/hooks/`:
 - `git-guard.sh` - Blocks dangerous git commands (forces gitpro skill)
 - `block-db-commands.sh` - Blocks Drizzle commands (requires human)
 - `dev-server-guard.sh` - Prevents AI from starting/killing dev server
+- `beads-inject.sh` - Injects beads workflow when `.beads/` exists
+- `beads-workflow.md` - Custom beads workflow guide (replaces `bd prime`)
 
 ## Tech Stack Context
 

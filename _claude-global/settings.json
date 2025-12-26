@@ -1,93 +1,117 @@
 {
+  "enabledPlugins": {
+    "frontend-design@claude-code-plugins": true,
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "hooks": {
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "command": "~/.claude/hooks/beads-inject.sh",
+            "type": "command",
+            "timeout": 5
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "~/.claude/hooks/block-db-commands.sh",
+            "timeout": 5,
+            "type": "command"
+          },
+          {
+            "command": "~/.claude/hooks/git-guard.sh",
+            "timeout": 5,
+            "type": "command"
+          },
+          {
+            "command": "~/.claude/hooks/dev-server-guard.sh",
+            "timeout": 5,
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      },
+      {
+        "hooks": [
+          {
+            "command": "~/.claude/hooks/block-db-commands.sh",
+            "timeout": 5,
+            "type": "command"
+          },
+          {
+            "command": "~/.claude/hooks/git-guard.sh",
+            "timeout": 5,
+            "type": "command"
+          },
+          {
+            "command": "~/.claude/hooks/dev-server-guard.sh",
+            "timeout": 5,
+            "type": "command"
+          }
+        ],
+        "matcher": "mcp__acp__Bash"
+      },
+      {
+        "hooks": [
+          {
+            "command": "~/.claude/hooks/block-console-log.sh",
+            "timeout": 5,
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit"
+      },
+      {
+        "hooks": [
+          {
+            "command": "~/.claude/hooks/block-console-log.sh",
+            "timeout": 5,
+            "type": "command"
+          }
+        ],
+        "matcher": "Write"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "~/.claude/hooks/beads-inject.sh",
+            "type": "command",
+            "timeout": 5
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "command": "~/.claude/hooks/architect_enforcer.sh",
+            "timeout": 5,
+            "type": "command"
+          }
+        ],
+        "matcher": ""
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Skill(gitpro)"
     ],
     "defaultMode": "bypassPermissions"
   },
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/architect_enforcer.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/block-db-commands.sh",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/git-guard.sh",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/dev-server-guard.sh",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "mcp__acp__Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/block-db-commands.sh",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/git-guard.sh",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/dev-server-guard.sh",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/block-console-log.sh",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/block-console-log.sh",
-            "timeout": 5
-          }
-        ]
-      }
-    ]
-  },
   "statusLine": {
-    "type": "command",
     "command": "~/.claude/statusline.sh",
-    "padding": 0
-  },
-  "enabledPlugins": {
-    "frontend-design@claude-code-plugins": true,
-    "typescript-lsp@claude-plugins-official": true
+    "padding": 0,
+    "type": "command"
   }
 }

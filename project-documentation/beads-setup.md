@@ -1,9 +1,6 @@
 # Beads Install and Setup
 
-```markdown
-# Beads + Claude Code Setup (No MCP)
-
-This document describes how our team installs and uses **Beads (`bd`)** with **Claude Code** locally, without MCP. It assumes macOS or Linux with Homebrew.
+This document describes how our team installs and uses **Beads (`bd`)** with **Claude Code** locally. It assumes macOS or Linux with Homebrew.
 
 ---
 
@@ -11,28 +8,19 @@ This document describes how our team installs and uses **Beads (`bd`)** with **C
 
 Run once per machine:
 
-```
-
-
+```bash
 # Add the Beads tap (if needed)
-
 brew tap steveyegge/beads
 
 # Install the Beads CLI
-
 brew install bd
-
 ```
 
 Verify the install:
 
-```
-
+```bash
 bd version
-
 ```
-
-[Source: Beads README & Homebrew release notes][web:2][web:25]
 
 ---
 
@@ -40,115 +28,141 @@ bd version
 
 Run in each project repo (once per clone):
 
-```
-
+```bash
 cd /path/to/repo
 
 # Choose one initialization mode:
-
-bd init              \# default
-
-# or:
-
-# bd init --team         \# team/branch workflow
-
-# bd init --contributor  \# OSS fork workflow
-
+bd init                # default
+# bd init --team         # team/branch workflow
+# bd init --contributor  # OSS fork workflow
 ```
 
 What this does:
 
-- Creates `.beads/` with the SQLite cache and JSONL issue store.  
-- Offers to install git hooks and configure the merge driver (say **yes**).  
+- Creates `.beads/` with the SQLite cache and JSONL issue store
+- Offers to install git hooks and configure the merge driver (say **yes**)
 
-You can run a health check at any time:
+Run a health check at any time:
 
-```
-
+```bash
 bd doctor
-
 ```
-
-[Source: Beads README & INSTALLING docs][web:2][web:4]
 
 Commit the metadata:
 
-```
-
+```bash
 git add .beads
 git commit -m "Initialize Beads issue tracker"
-
 ```
 
 ---
 
-## 3. Add `CLAUDE.md` for Claude Code
+## 3. Claude Code Integration (Hook-Based)
 
-In the repo root, add a `CLAUDE.md` file (or update it) with:
+Our starter kit uses **custom hooks** instead of `bd prime` for Claude Code integration.
 
-```
+### How It Works
 
+The `~/.claude/settings.json` includes hooks that:
+1. Run on **SessionStart** and **PreCompact** (context recovery)
+2. Check if `.beads/` directory exists in the current project
+3. If beads is installed, inject the workflow guide from `~/.claude/hooks/beads-workflow.md`
 
-# Claude Setup for This Repo
+### Files Involved
 
-BEFORE ANYTHING ELSE in this repo:
+| File | Purpose |
+|------|---------|
+| `~/.claude/hooks/beads-inject.sh` | Checks for `.beads`, outputs workflow if found |
+| `~/.claude/hooks/beads-workflow.md` | Custom workflow guide (our version, not `bd prime`) |
+| `~/.claude/settings.json` | Hook configuration |
 
-1. Open a terminal in this project directory.
-2. Run: `bd onboard` and follow the instructions.
-3. Then run: `bd quickstart` to learn the Beads workflow.
+### Why Custom Hooks Instead of `bd prime`
 
-From now on, use the `bd` CLI for planning and task tracking
-(creating, updating, and linking issues) instead of ad-hoc markdown TODO lists.
-
-```
-
-Claude Code reads `CLAUDE.md` at session start and will follow these instructions when working in this repo. [Source: CLAUDE.md guidance in Beads repo][web:18]
-
-Commit it:
-
-```
-
-git add CLAUDE.md
-git commit -m "Add Claude + Beads onboarding instructions"
-
-```
+- **Full control** over workflow guidance
+- **No upstream surprises** when beads updates
+- **Custom label workflow** (coding → needs-testing → tested-local → deployed)
+- **AI autonomy boundaries** (what AI can/cannot close)
+- **Single source of truth** for our team's workflow
 
 ---
 
-## 4. Onboard Beads in the repo
+## 4. Opting Out of Beads
 
-Each developer (or at least the first dev on a new clone) should run:
+To disable beads integration for a user:
 
+1. Edit `~/.claude/settings.json`
+2. Remove or comment out the `beads-inject.sh` hooks from `PreCompact` and `SessionStart`
+
+```json
+"PreCompact": [],
+"SessionStart": []
 ```
 
-cd /path/to/repo
-
-# Get integration guidance and ensure DB is healthy
-
-bd onboard
-
-# Optional interactive workflow tutorial
-
-bd quickstart
-
-```
-
-`bd onboard` prints Beads + Claude integration hints and verifies the local setup. [Source: Beads README][web:2]
+The hooks are smart - they only inject when `.beads/` exists. But removing the hooks entirely ensures zero beads-related context injection.
 
 ---
 
-## 5. Daily usage expectations
+## 5. Daily Usage
 
 When working with Claude Code in this repo:
 
-- Keep `.beads/` committed and synced with git. [web:2]  
-- Use `bd` for all work planning and tracking:
-  - `bd ready` – show ready-to-work issues.  
-  - `bd create "Title" -t task -p 2` – create tasks/bugs/features.  
-  - `bd dep add <child> <parent>` – manage dependencies.  
-- Let Claude read `CLAUDE.md` and call `bd` commands instead of maintaining its own markdown TODO lists. [web:2][web:18]
+- Keep `.beads/` committed and synced with git
+- Use `bd` for persistent work planning and tracking:
+  - `bd ready` – show ready-to-work issues
+  - `bd create "Title" -t task -p 2` – create tasks/bugs/features
+  - `bd dep add <issue> <depends-on>` – manage dependencies
+  - `bd status` – project health overview
+  - `bd close <id> --suggest-next` – close and show newly unblocked (v0.37+)
 
-This gives Claude long-term, dependency-aware memory for the codebase with no MCP server required.
+For command reference: `bd --help` or `bd <command> --help`
+
+---
+
+## 6. Upgrading Beads
+
+### Understanding the Data Model
+
+**JSONL is the source of truth**, not SQLite. The `.beads/issues.jsonl` file is git-tracked and serves as the authoritative data store. SQLite is a derived cache that gets rebuilt automatically.
+
+### Standard Upgrade
+
+```bash
+# Check current version
+bd version
+
+# Upgrade via Homebrew
+brew upgrade bd
+
+# Trigger any pending migrations (any command works)
+bd list --json
 ```
 
+### If Something Breaks
 
+If the upgrade causes database issues, reimport from JSONL:
+
+```bash
+# Backup existing DB (optional)
+for f in .beads/*.db; do mv "$f" "$f.backup"; done
+
+# Reinitialize and import from git-tracked JSONL
+bd init
+bd import -i .beads/issues.jsonl
+```
+
+### Auto-Recovery Behavior
+
+Beads auto-imports from JSONL when it detects the JSONL is newer than the DB (e.g., after `git pull`). This provides built-in resilience during upgrades.
+
+### Updating the Workflow Guide
+
+After major beads upgrades, review release notes for new commands or workflow changes:
+
+1. Check releases: https://github.com/steveyegge/beads/releases
+2. Look for new commands, breaking changes, workflow improvements
+3. Update `_claude-global/hooks/beads-workflow.md` in the starter kit
+4. Run `/sync-global` to install
+
+**Source of truth**: `_claude-global/hooks/beads-workflow.md` in the starter kit
+
+The hook at `~/.claude/hooks/beads-inject.sh` reads from `~/.claude/hooks/beads-workflow.md` and injects it when `.beads/` exists.
