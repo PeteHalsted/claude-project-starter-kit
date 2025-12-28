@@ -70,9 +70,12 @@ bd label add nad-42 tested-local
 
 # 4. [USER] Deployed to production
 bd label remove nad-42 tested-local
+bd label remove nad-42 active-now   # ALWAYS remove before close
 bd label add nad-42 deployed
 bd close nad-42 --reason "Deployed to production"
 ```
+
+**CRITICAL**: Always remove `active-now` before closing. A closed bead cannot be active.
 
 ## Key Commands
 
@@ -119,6 +122,47 @@ bd update nad-42 --notes "Found this also affects prospects import. May need fol
 bd list --label active-now
 # Should return exactly ONE bead (or zero if nothing was active)
 ```
+
+### Context Recovery Protocol
+
+**RULE**: Non-trivial code changes require an `active-now` bead.
+
+| Activity | Bead Required? |
+|----------|----------------|
+| Discussion, planning, research | No (often creates beads) |
+| Code edits (Edit/Write tools) | **Yes** |
+| Trivial fixes (typos, formatting) | Judgment call |
+
+**Field usage for recovery:**
+
+| Field | Purpose | Mutability |
+|-------|---------|------------|
+| `design` | Where we're going (architectural intent) | Immutable |
+| `acceptance` | What counts as done | Immutable |
+| `notes` | Where we are now (current status) | Replace each update |
+| `comments` | How we got here (action trail) | Append at checkpoints |
+
+**Notes format** (replace after each logical unit):
+```
+Working: [1-line description]
+File: [current focus file]
+Last: [last completed action]
+Next: [immediate next step]
+```
+
+**Update notes when:**
+- Starting work on bead
+- Completing a logical unit (function, component, test)
+- Before context might compact
+- When switching focus files
+
+**Add comments for significant checkpoints:**
+```bash
+bd comments add <id> "Completed webhook validation, moving to error handling"
+bd comments add <id> "Discovered edge case, created nad-47 for follow-up"
+```
+
+**Why**: User can always ask "what were we working on?" and AI answers from active-now bead.
 
 ## Tech-Debt Tracking
 

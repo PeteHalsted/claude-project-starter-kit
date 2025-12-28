@@ -97,6 +97,11 @@
             "command": "~/.claude/hooks/architect_enforcer.sh",
             "timeout": 5,
             "type": "command"
+          },
+          {
+            "command": "~/.claude/hooks/active-now-reminder.sh",
+            "timeout": 5,
+            "type": "command"
           }
         ],
         "matcher": ""

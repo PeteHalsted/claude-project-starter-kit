@@ -11,6 +11,20 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ---
 
+### December 28, 2025
+
+#### Beads Context Recovery Enhancement
+- **New `active-now-reminder.sh` hook**: UserPromptSubmit hook reminds AI to claim a bead before code changes
+- **Bug fix**: Close sequence now removes `active-now` label before closing beads (prevents impossible state)
+- **Context Recovery Protocol**: Enhanced Session Recovery section with:
+  - Rule: Non-trivial code changes require `active-now` bead
+  - Field usage table: `design`/`acceptance` (immutable), `notes` (replace), `comments` (append)
+  - Structured notes format for session recovery
+  - Update triggers for maintaining current status
+- **Removed stale reference**: Removed `@airules/beads.md` from sync-starter-kit template
+
+---
+
 ### December 26, 2025
 
 #### GitPro Beads Integration
