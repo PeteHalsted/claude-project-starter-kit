@@ -13,6 +13,12 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ### December 28, 2025
 
+#### GitPro Bead Notes Automation
+- **Auto bead notes update**: gitpro checkpoint/commit now auto-updates active-now bead notes
+- **Simplified beads-workflow.md**: Notes auto-updated by gitpro, manual update rarely needed
+- **New Stop hook**: `bead-comment-reminder.sh` triggers on session stop
+- **New script**: `fix-claude-lsp.sh` for LSP troubleshooting
+
 #### LSP Reminder Removal
 - **Removed Section XI (LSP-First)** from constitution.md - pulled from project
 - **Removed `lsp-reminder.sh` hook** from settings.json and hooks folder

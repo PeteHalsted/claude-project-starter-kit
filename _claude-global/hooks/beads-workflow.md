@@ -139,27 +139,23 @@ bd list --label active-now
 |-------|---------|------------|
 | `design` | Where we're going (architectural intent) | Immutable |
 | `acceptance` | What counts as done | Immutable |
-| `notes` | Where we are now (current status) | Replace each update |
-| `comments` | How we got here (action trail) | Append at checkpoints |
+| `notes` | Where we are now (current status) | Replace at git commit |
+| `comments` | How we got here (action trail) | Append as you work |
 
-**Notes format** (replace after each logical unit):
-```
-Working: [1-line description]
-File: [current focus file]
-Last: [last completed action]
-Next: [immediate next step]
-```
+**Notes** are auto-updated by gitpro at commit time. Manual update rarely needed.
 
-**Update notes when:**
-- Starting work on bead
-- Completing a logical unit (function, component, test)
-- Before context might compact
-- When switching focus files
+**Comments** preserve the action trail. Add when you've done enough work that:
+- Losing context would set someone back
+- You made a decision that isn't obvious from the code
+- You hit a dead end or changed approach
+- You discovered something that affects the work
 
-**Add comments for significant checkpoints:**
+**Not every edit. Not just major features.** The middle ground: "I did a thing, here's what and why."
+
 ```bash
 bd comments add <id> "Completed webhook validation, moving to error handling"
 bd comments add <id> "Discovered edge case, created nad-47 for follow-up"
+bd comments add <id> "Switched from float layout to flex - CSS limitation with dynamic height"
 ```
 
 **Why**: User can always ask "what were we working on?" and AI answers from active-now bead.

@@ -55,7 +55,23 @@ Create fast timestamped commits during active work without analysis overhead.
    - **If invoked by user manually**: `[timestamp] Checkpoint`
    - **If invoked by AI with custom message**: `[custom message] - [timestamp]`
 6. Run `GITPRO_RUNNING=1 git commit -m "[message]"` with appropriate format
-7. Report success to user
+7. **Bead notes update (if active-now bead exists):**
+   - Check if `.beads/` directory exists in repository root
+   - **If .beads/ exists:**
+     - Run `bd list --label active-now --json 2>/dev/null | jq -r '.[0].id // empty'` to get active bead ID
+     - **If active bead exists:**
+       - Update notes with current status using format:
+         ```
+         Working: [brief description of current work]
+         File: [primary file being modified]
+         Last: [what was just checkpointed]
+         Next: [immediate next step if known]
+         ```
+       - Run `bd update <bead-id> --notes "<status>"`
+       - Report: "Updated bead <bead-id> notes"
+     - **If no active bead:** Skip silently
+   - **If .beads/ does not exist:** Skip this step
+8. Report success to user
 
 **Key characteristics:**
 - No diff analysis required
@@ -64,6 +80,7 @@ Create fast timestamped commits during active work without analysis overhead.
 - No TypeScript or toast validation (speed over compliance)
 - Fast execution for frequent use during development
 - Optional custom message prefix for workflow automation
+- **Bead notes:** Auto-updates active-now bead with current status
 
 **Example outputs:**
 - Manual: `2025-10-29_16:23.45 Checkpoint`
@@ -121,11 +138,28 @@ Create full conventional commits with changelog integration and proper formattin
       - Run `GITPRO_RUNNING=1 git tag [version]` after commit
     - **Otherwise:** Skip version bumping (only done during merge workflow)
 12. Run `GITPRO_RUNNING=1 git commit -m "<message>"` to commit everything together (if version not already committed)
-13. **Beads sync (post-commit):**
+13. **Bead notes update (if active-now bead exists):**
+    - Check if `.beads/` directory exists in repository root
+    - **If .beads/ exists:**
+      - Run `bd list --label active-now --json 2>/dev/null | jq -r '.[0].id // empty'` to get active bead ID
+      - **If active bead exists:**
+        - Analyze the committed changes to summarize current status
+        - Update notes with current status using format:
+          ```
+          Working: [brief description of current work]
+          File: [primary file(s) modified in this commit]
+          Last: [summary of what was just committed]
+          Next: [immediate next step if known, or "Ready for testing" if work complete]
+          ```
+        - Run `bd update <bead-id> --notes "<status>"`
+        - Report: "Updated bead <bead-id> notes"
+      - **If no active bead:** Skip silently
+    - **If .beads/ does not exist:** Skip this step
+14. **Beads sync (post-commit):**
     - Check if `.beads/` directory exists in repository root
     - **If .beads/ exists:** Run `bd sync` to commit any beads changes made during the session
     - **If .beads/ does not exist:** Skip this step
-14. **Automatic push (non-main branches only):**
+15. **Automatic push (non-main branches only):**
     - Get current branch with `git branch --show-current`
     - **If NOT on `main` branch:**
       - Run `GITPRO_RUNNING=1 git push` (or `GITPRO_RUNNING=1 git push -u origin [branch-name]` if no upstream)
@@ -133,7 +167,7 @@ Create full conventional commits with changelog integration and proper formattin
     - **If on `main` branch:**
       - Skip automatic push to prevent unintended CI/CD triggers
       - Report successful commit with reminder to manually push when ready
-15. Report success to user with commit message, push status, changelog update status, TypeScript status, beads sync status, and any toast warnings
+16. Report success to user with commit message, push status, changelog update status, TypeScript status, beads sync status, bead notes update, and any toast warnings
 
 **Key characteristics:**
 - Commits ALL changes together (no logical splitting)
@@ -143,6 +177,7 @@ Create full conventional commits with changelog integration and proper formattin
 - **TypeScript validation:** Handled by git pre-commit hook (zero tolerance)
 - **Toast validation:** Warns about deprecated toast usage (non-blocking)
 - **Beads sync:** Automatic pre/post-commit sync (if .beads/ exists)
+- **Bead notes:** Auto-updates active-now bead with current status summary
 - **Hotfix exception:** Version bumps on `main` for fixes/hotfixes only
 - **Auto-push:** Automatically pushes to remote after commit (non-main branches only)
 - **Main branch safety:** Skips auto-push on `main` to prevent unintended CI/CD triggers
@@ -253,6 +288,7 @@ Create new branch with specified or default name.
 | Toast usage | Skip | Warning | Via Commit |
 | Changelog update | Skip | Yes | Via Commit |
 | Beads sync | Skip | If .beads/ exists | Via Commit |
+| Bead notes update | If active-now exists | If active-now exists | Via Commit |
 | Version bump | Skip | Hotfix only | Yes |
 
 ## Available Tools
