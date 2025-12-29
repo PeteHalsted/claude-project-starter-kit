@@ -114,3 +114,4 @@ Toasts are deprecated. Use contextual feedback instead. See `development-guideli
 - Production code NEVER imports from `docs/`, `specs/`, `project-documentation/`.
 - Test with real APIs, not mocks.
 - Architecture separation: validation inline in production code, not imported from spec files.
+

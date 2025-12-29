@@ -13,6 +13,11 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ### December 28, 2025
 
+#### LSP Reminder Removal
+- **Removed Section XI (LSP-First)** from constitution.md - pulled from project
+- **Removed `lsp-reminder.sh` hook** from settings.json and hooks folder
+- **Simplified bashtools.md** - condensed to table format, removed redundant examples
+
 #### Beads Context Recovery Enhancement
 - **New `active-now-reminder.sh` hook**: UserPromptSubmit hook reminds AI to claim a bead before code changes
 - **Bug fix**: Close sequence now removes `active-now` label before closing beads (prevents impossible state)
