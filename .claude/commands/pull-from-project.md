@@ -1,6 +1,6 @@
 # Pull From Project
 
-Pull AIRules and git hooks changes from a real project back into the starter kit. Master only.
+Pull rules and git hooks changes from a real project back into the starter kit. Master only.
 
 ## Step 1: Verify Master mode
 
@@ -18,7 +18,7 @@ Ask user: "Which project to pull from?"
 Suggest common paths:
 - `~/projects/mysite.nextagedesigns`
 - `~/projects/brochure-site-builder`
-
+- `~/projects/leakgopher`
 Or accept custom path.
 
 ## Step 3: Validate project
@@ -31,28 +31,30 @@ if [[ ! -d "$PROJECT_PATH" ]]; then
   exit 1
 fi
 
-if [[ ! -d "$PROJECT_PATH/AIRules" ]]; then
-  echo "ERROR: No AIRules/ folder in project"
+if [[ ! -d "$PROJECT_PATH/.claude/rules" ]]; then
+  echo "ERROR: No .claude/rules/ folder in project"
   exit 1
 fi
 ```
 
-## Step 4: Compare AIRules files
+## Step 4: Compare rules files (recursive)
 
 ```bash
-for project_file in "$PROJECT_PATH/AIRules"/*.md; do
-  filename=$(basename "$project_file")
-  kit_file="./airules/$filename"
+# Find all .md files recursively
+find "$PROJECT_PATH/.claude/rules" -name "*.md" -type f | while read project_file; do
+  # Get relative path
+  rel_path="${project_file#$PROJECT_PATH/.claude/rules/}"
+  kit_file="./_claude-project/rules/$rel_path"
 
   # Skip projectrules.md - always project-specific
-  [[ "$filename" == "projectrules.md" ]] && continue
+  [[ "$rel_path" == "projectrules.md" ]] && continue
 
   if [[ ! -f "$kit_file" ]]; then
-    echo "NEW: $filename"
+    echo "NEW: $rel_path"
   elif diff -q "$project_file" "$kit_file" > /dev/null 2>&1; then
-    echo "IDENTICAL: $filename"
+    echo "IDENTICAL: $rel_path"
   else
-    echo "DIFFERS: $filename"
+    echo "DIFFERS: $rel_path"
   fi
 done
 ```
@@ -75,17 +77,22 @@ for kit_hook in ./_git-hooks-project/*; do
 done
 ```
 
-## Step 6: For DIFFERS AIRules files
+## Step 6: For DIFFERS rules files
 
 Show diff and ask:
 ```bash
-diff "./airules/$filename" "$PROJECT_PATH/AIRules/$filename"
+diff "./_claude-project/rules/$rel_path" "$PROJECT_PATH/.claude/rules/$rel_path"
 ```
 "Pull project version? (y/n)"
 
-## Step 7: For NEW AIRules files
+## Step 7: For NEW rules files
 
 Show first 30 lines, ask: "Add to starter kit? (y/n)"
+
+Ensure parent directories exist:
+```bash
+mkdir -p "$(dirname "./_claude-project/rules/$rel_path")"
+```
 
 ## Step 8: For DIFFERS git hooks
 
@@ -95,10 +102,11 @@ diff "./_git-hooks-project/$hookname" "$PROJECT_PATH/.git/hooks/$hookname"
 ```
 "Pull project version? (y/n)"
 
-## Step 9: Apply AIRules
+## Step 9: Apply rules
 
 ```bash
-cp "$PROJECT_PATH/AIRules/$filename" "./airules/$filename"
+mkdir -p "$(dirname "./_claude-project/rules/$rel_path")"
+cp "$PROJECT_PATH/.claude/rules/$rel_path" "./_claude-project/rules/$rel_path"
 ```
 
 ## Step 10: Apply git hooks
@@ -107,6 +115,11 @@ cp "$PROJECT_PATH/AIRules/$filename" "./airules/$filename"
 cp "$PROJECT_PATH/.git/hooks/$hookname" "./_git-hooks-project/$hookname"
 ```
 
-## Step 11: Remind
+## Step 11: Summary
 
-If NEW AIRules files added: "Update AGENTS.md template to include new import."
+Report what was pulled:
+- X rules files updated
+- Y new rules files added
+- Z git hooks updated
+
+Note: Rules are auto-discovered. No import updates needed (unlike legacy AGENTS.md).

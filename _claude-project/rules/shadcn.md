@@ -1,3 +1,7 @@
+---
+paths: **/*.tsx, **/*.css, **/tailwind.config.*, **/components.json
+---
+
 ## shadcn-ui MCP Server Usage rules
 
 ### Usage Rule

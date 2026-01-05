@@ -30,19 +30,16 @@ From any project directory in Claude Code:
 ```
 
 This command:
-- Syncs `AIRules/` folder (creates if missing)
+- Syncs `.claude/rules/` folder (creates if missing)
 - Installs git hooks (makes executable)
-- Audits `CLAUDE.md` (warns if not minimal)
-- Intelligently merges `AGENTS.md` (preserves your enabled/disabled choices)
+- Checks for legacy files (warns if AGENTS.md or AIRules/ exist)
 
 ### Manual Setup (Alternative)
 
 If you prefer manual control:
 
-1. Copy `airules/` folder to your project root as `AIRules/`
+1. Copy `.claude/rules/` folder to your project
 2. Copy `_git-hooks-project/` contents to `.git/hooks/` and `chmod +x`
-3. Create minimal `CLAUDE.md` (just `@AGENTS.md` import)
-4. Create `AGENTS.md` with imports for your project
 
 ## Folder Structure
 
@@ -50,7 +47,7 @@ If you prefer manual control:
 |--------|-------------|---------|
 | `_claude-global/` | `~/.claude/` | Global Claude Code config (skills, hooks) |
 | `_git-hooks-project/` | `project/.git/hooks/` | Git hooks (TypeScript validation, beads sync) |
-| `airules/` | `project/AIRules/` | Modular AI behavior rules (imported via AGENTS.md) |
+| `_claude-project/rules/` | `project/.claude/rules/` | Rule templates (synced to native rules directory) |
 | `project-documentation/` | `project/project-documentation/` | Documentation template structure |
 
 ## File Classification
@@ -59,18 +56,14 @@ Understanding which files sync vs which are templates is critical for the sync s
 
 ### Core Files (Bi-Directional Sync)
 These should be identical across all projects:
-- `airules/*.md` - All AI behavior rules
-- `_claude-global/` - Global Claude config (skills, hooks, output styles)
+- `_claude-project/rules/*.md` - Rule templates (synced to `.claude/rules/`)
+- `_claude-global/` - Global Claude config (skills, hooks)
 - `_git-hooks-project/` - Git hooks
 
 ### Template Files (One-Way: Starter Kit to Project)
 Starting points that get customized per project:
-- `AGENTS.md` - Import list (toggle rules on/off per project)
-- `CLAUDE.md` - Entry point (usually just imports AGENTS.md)
-- `readme.md` - Project README structure
-- `changelog.md` - Changelog format
-- `airules/constitution.md` - Global rules
-- `airules/projectrules.md` - Project-specific rules template
+- `CLAUDE.md` - Optional project notes
+- `_claude-project/rules/projectrules.md` - Project-specific rules template
 
 ### Project-Specific (Never Sync)
 Files that exist only in real projects:
@@ -81,21 +74,31 @@ Files that exist only in real projects:
 
 ## Key Components
 
-### AIRules (Modular Behavior Rules)
+### Rules (Native .claude/rules/ Directory)
 
-The `airules/` folder contains markdown files that define AI agent behavior. Enable/disable them via imports in `AGENTS.md`:
+Claude Code's native rules system - all `.md` files auto-discovered, no imports needed.
 
 | File | Purpose |
 |------|---------|
-| `bashtools.md` | Shell tooling standards (fd, rg, ast-grep, jq) |
-| `git.md` | Git workflow rules (mandates gitpro skill) |
-| `development-guidelines.md` | Code quality, TypeScript, documentation |
-| `ClaudeChrome.md` | Browser automation via Claude in Chrome |
 | `constitution.md` | Global rules (naming, quality, security) |
-| `projectrules.md` | Project-specific rules template |
+| `development-guidelines.md` | Code quality, TypeScript, documentation |
+| `git.md` | Git workflow rules (mandates gitpro skill) |
+| `bashtools.md` | Shell tooling standards (fd, rg, ast-grep, jq) |
 | `shadcn.md` | shadcn/ui component integration |
-| `ref.md` | API/library doc lookup via Ref MCP |
-| `exa.md` | Web research via Exa MCP |
+| `projectrules.md` | Project-specific rules template |
+| `integrations/ref.md` | API/library doc lookup via Ref MCP |
+| `integrations/exa.md` | Web research via Exa MCP |
+| `integrations/ClaudeChrome.md` | Browser automation via Claude in Chrome |
+
+**Path-targeting**: Rules can be scoped to specific files using YAML frontmatter:
+```yaml
+---
+paths: src/api/**/*.ts
+---
+# These rules only apply when working on API files
+```
+
+See `project-documentation/path-targeting-rules.md` for details.
 
 ### Skills (Global Claude Capabilities)
 
@@ -156,8 +159,6 @@ From any project directory in Claude Code:
 /sync-starter-kit
 ```
 
-See Quick Start above for what this does.
-
 ## For AI Agents
 
 This section provides context for Claude and other AI agents working on this repository.
@@ -165,20 +166,20 @@ This section provides context for Claude and other AI agents working on this rep
 **This is a meta-repository** - it defines configurations and rules for OTHER projects. When working here:
 
 1. **You are editing templates** that will be copied to real projects
-2. **Changes here propagate** to multiple projects via sync (Phase 2)
-3. **The constitution here** is a template - real projects have customized versions
+2. **Changes here propagate** to multiple projects via sync
+3. **The constitution here** is a template - real projects may have customized versions
 4. **Test changes carefully** - they affect all synced projects
 
 **Key files to understand:**
-- `AGENTS.md` - Central import hub for all AI rules
-- `airules/constitution.md` - Global rules (apply to all projects)
-- `airules/projectrules.md` - Project-specific rules template
-- `airules/*.md` - Individual behavior rule modules
+- `_claude-project/rules/constitution.md` - Global rules (apply to all projects)
+- `_claude-project/rules/projectrules.md` - Project-specific rules template
+- `_claude-project/rules/*.md` - Individual behavior rule modules
 
 **When adding new rules:**
-1. Create new `.md` file in `airules/`
-2. Document the import line for `AGENTS.md`
-3. Consider if it should be on by default or commented out
+1. Create new `.md` file in `_claude-project/rules/`
+2. Consider if it needs path-targeting (see `project-documentation/path-targeting-rules.md`)
+3. If MCP-dependent, add to MCP_RULES mapping in sync script
+4. Rules auto-discover in projects after sync
 
 ## Sync System
 
@@ -192,14 +193,14 @@ Two commands keep projects in sync:
 **Key behaviors:**
 - Interactive prompts before any changes
 - Shows diffs for modified files
-- Intelligent `AGENTS.md` merge (preserves your choices)
-- Handles path mapping (`airules/` → `AIRules/`)
+- Warns about legacy files (AGENTS.md, AIRules/)
+- Recursive comparison of `.claude/rules/` including subdirectories
 
 See `project-documentation/sync-system-planning.md` for technical details.
 
 ## Master Workflow (Maintainer Only)
 
-When you improve AIRules in a real project and want to bring changes back to the starter kit:
+When you improve rules in a real project and want to bring changes back to the starter kit:
 
 ```
 # From the starter kit directory in Claude Code
@@ -209,15 +210,24 @@ When you improve AIRules in a real project and want to bring changes back to the
 This command:
 - Only works from starter kit (checks for `.claude/master.txt`)
 - Asks which project to pull from
-- Compares project `AIRules/` with kit `airules/`
+- Compares project `.claude/rules/` with kit `.claude/rules/`
 - Shows diffs, asks which files to pull
 - Skips `projectrules.md` (always project-specific)
-- Reminds to update `AGENTS.md` template for new imports
 
 After pulling, run `/sync-global` to push updated rules to `~/.claude/`.
 
+## Migration from Legacy Structure
+
+If your project uses the old AGENTS.md/AIRules pattern:
+
+1. Run `/sync-starter-kit` - it will warn about legacy files
+2. Copy any custom rules from `AIRules/` to `.claude/rules/`
+3. Delete `AGENTS.md` and `AIRules/` folder
+4. Update `CLAUDE.md` to remove imports (rules auto-discover)
+
 ## Related Files
 
-- `CLAUDE.md` - Entry point, imports AGENTS.md
-- `AGENTS.md` - Central hub for all AI rule imports
+- `CLAUDE.md` - Minimal project entry point
+- `.claude/rules/` - Native rules directory
 - `changelog.md` - Change history for this starter kit
+- `project-documentation/path-targeting-rules.md` - Path-specific rules guide

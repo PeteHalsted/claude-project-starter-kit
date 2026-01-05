@@ -11,6 +11,22 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ---
 
+### January 5, 2026
+
+#### Skills Added
+- **TanStack skill**: Added mfing-bible-of-tanstack skill with comprehensive references (server-functions, routes, query, auth, api-routes, loading-states, debugging, anti-patterns)
+- **Beads skill**: Added beads workflow skill
+
+#### Rules Restructure
+- **New `_claude-project/rules/` directory**: Moved rules from deprecated `airules/` location
+- **Integrations subfolder**: Created `_claude-project/rules/integrations/` for tool-specific rules (ClaudeChrome, exa, ref)
+- **Deleted `airules/`**: Removed deprecated rules directory
+
+#### ClaudeChrome Update
+- **Generic auth cookies**: Changed "OAuth cookies" to "Auth cookies" (removed Clerk-specific reference)
+
+---
+
 ### December 28, 2025
 
 #### GitPro Bead Notes Automation

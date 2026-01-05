@@ -54,8 +54,7 @@ Create fast timestamped commits during active work without analysis overhead.
 5. Determine commit message format:
    - **If invoked by user manually**: `[timestamp] Checkpoint`
    - **If invoked by AI with custom message**: `[custom message] - [timestamp]`
-6. Run `GITPRO_RUNNING=1 git commit -m "[message]"` with appropriate format
-7. **Bead notes update (if active-now bead exists):**
+6. **Bead notes update (if active-now bead exists):**
    - Check if `.beads/` directory exists in repository root
    - **If .beads/ exists:**
      - Run `bd list --label active-now --json 2>/dev/null | jq -r '.[0].id // empty'` to get active bead ID
@@ -71,6 +70,7 @@ Create fast timestamped commits during active work without analysis overhead.
        - Report: "Updated bead <bead-id> notes"
      - **If no active bead:** Skip silently
    - **If .beads/ does not exist:** Skip this step
+7. Run `GITPRO_RUNNING=1 git commit -m "[message]"` with appropriate format   
 8. Report success to user
 
 **Key characteristics:**
@@ -131,14 +131,13 @@ Create full conventional commits with changelog integration and proper formattin
 11. **Version bumping (hotfix exception):**
     - Check current branch with `git branch --show-current`
     - **If on `main` branch AND commit is a fix/hotfix:**
-      - Run `cd apps/web && npm version patch --no-git-tag-version` to bump version
+      - Run `npm version patch --no-git-tag-version` to bump version (uses root package.json)
       - Capture new version from output
-      - Run `GITPRO_RUNNING=1 git add apps/web/package.json package-lock.json`
+      - Run `GITPRO_RUNNING=1 git add package.json package-lock.json`
       - Include version files in the commit (step 12)
       - Run `GITPRO_RUNNING=1 git tag [version]` after commit
     - **Otherwise:** Skip version bumping (only done during merge workflow)
-12. Run `GITPRO_RUNNING=1 git commit -m "<message>"` to commit everything together (if version not already committed)
-13. **Bead notes update (if active-now bead exists):**
+12. **Bead notes update (if active-now bead exists):**
     - Check if `.beads/` directory exists in repository root
     - **If .beads/ exists:**
       - Run `bd list --label active-now --json 2>/dev/null | jq -r '.[0].id // empty'` to get active bead ID
@@ -154,7 +153,8 @@ Create full conventional commits with changelog integration and proper formattin
         - Run `bd update <bead-id> --notes "<status>"`
         - Report: "Updated bead <bead-id> notes"
       - **If no active bead:** Skip silently
-    - **If .beads/ does not exist:** Skip this step
+    - **If .beads/ does not exist:** Skip this step    
+13. Run `GITPRO_RUNNING=1 git commit -m "<message>"` to commit everything together (if version not already committed)
 14. **Beads sync (post-commit):**
     - Check if `.beads/` directory exists in repository root
     - **If .beads/ exists:** Run `bd sync` to commit any beads changes made during the session
@@ -204,62 +204,62 @@ Rename current branch based on actual work being done.
 
 Execute full merge workflow from commit through version bumping and creating new working branch.
 
-**CRITICAL** This workflow must only push changes once when completely finished. If you push changes multiple times, you may trigger mutliple CI/ID pipelines that will conflict and cause a failure! 
+**CRITICAL** This workflow must only push changes once when completely finished. If you push changes multiple times, you may trigger mutliple CI/ID pipelines that will conflict and cause a failure!
 
 **When to use:** User says "merge" or "merge the branch"
 
 **Execution steps:**
-1. Run `git status` to check for uncommitted changes
-2. If changes exist, execute full Commit workflow first (includes TypeScript validation)
-3. Get current branch name with `git branch --show-current`
-4. Run `GITPRO_RUNNING=1 git push origin [current-branch]` to push current branch
-5. Run `git checkout main` to switch to main
-6. Run `git pull` to update main
-7. Run `GITPRO_RUNNING=1 git merge [current-branch]` to merge
-8. **Intelligent version bumping (MUST COMPLETE BEFORE PUSH):**
+1. Get username for branch naming: `GITPRO_USER=$(whoami)` - used for `wt-${GITPRO_USER}` branch
+2. Run `git status` to check for uncommitted changes
+3. If changes exist, execute full Commit workflow first (includes TypeScript validation)
+4. Get current branch name with `git branch --show-current`
+5. Run `GITPRO_RUNNING=1 git push origin [current-branch]` to push current branch
+6. Run `git checkout main` to switch to main
+7. Run `git pull` to update main
+8. Run `GITPRO_RUNNING=1 git merge [current-branch]` to merge
+9. **Intelligent version bumping (MUST COMPLETE BEFORE PUSH):**
    - Run `git log --oneline main~10..main` to analyze recent commits
    - Determine version bump type by examining commit messages:
      - **Major bump** if any commit contains: `BREAKING CHANGE`, exclamation mark (!) after type, or `major` in description
      - **Minor bump** if any commit contains: `feat:`, `✨`, or `feature` indicators
      - **Patch bump** otherwise (fixes, chores, docs, refactors)
-   - **Bump version (without auto-commit - monorepo compatibility):**
-     - Run `(cd apps/web && npm version [major|minor|patch] --no-git-tag-version)` to bump version
-     - **CRITICAL:** Use subshell `(cd ...)` to preserve working directory at project root
+   - **Bump version (uses root package.json as single source of truth):**
+     - Run `npm version [major|minor|patch] --no-git-tag-version` to bump version
      - Capture the new version number from output (e.g., `v1.5.1`)
-   - **Explicitly commit version bump from repo root:**
-     - **Verify you are at project root:** Run `pwd` - must be the monorepo root, NOT apps/web
-     - Run `GITPRO_RUNNING=1 git add apps/web/package.json package-lock.json`
+   - **Explicitly commit version bump:**
+     - Run `GITPRO_RUNNING=1 git add package.json package-lock.json`
      - Run `GITPRO_RUNNING=1 git commit -m "🔖 chore: bump version to [version]"`
      - Run `GITPRO_RUNNING=1 git tag [version]` (e.g., `v1.5.1`)
-   - **WAIT for this step to complete before proceeding to step 9**
-9. **Push main WITH version bump (after step 8 completes):**
-   - Run `GITPRO_RUNNING=1 git push` to push main (includes merge commit AND version bump commit)
-   - Run `GITPRO_RUNNING=1 git push --tags` to push version tags
-   - **CRITICAL:** Both the merge AND the version bump commit must be included in the push
-10. **Create fresh working-title branch (with safety check):**
-    - Check if `working-title` branch exists: `git branch --list working-title`
-    - **If working-title exists:**
+   - **WAIT for this step to complete before proceeding to step 10**
+10. **Push main WITH version bump (after step 9 completes):**
+    - Run `GITPRO_RUNNING=1 git push` to push main (includes merge commit AND version bump commit)
+    - Run `GITPRO_RUNNING=1 git push --tags` to push version tags
+    - **CRITICAL:** Both the merge AND the version bump commit must be included in the push
+11. **Create fresh user working branch (with safety check):**
+    - Check if `wt-${GITPRO_USER}` branch exists: `git branch --list wt-${GITPRO_USER}`
+    - **If wt-${GITPRO_USER} exists:**
       - Check for unmerged commits: `git branch --no-merged main`
-      - **If working-title has unmerged commits:**
-        - STOP and report error: "⚠️ Cannot create working-title: existing branch has unmerged commits. Please rename, merge, or delete the old branch first."
+      - **If wt-${GITPRO_USER} has unmerged commits:**
+        - STOP and report error: "⚠️ Cannot create wt-${GITPRO_USER}: existing branch has unmerged commits. Please rename, merge, or delete the old branch first."
         - Exit merge workflow (main is already merged and pushed successfully)
-      - **If working-title is fully merged:**
+      - **If wt-${GITPRO_USER} is fully merged:**
         - **Check for beads worktree blocking deletion:**
-          - Run `git worktree list | grep working-title` to check if worktree exists
-          - If worktree exists: Run `git worktree remove .git/beads-worktrees/working-title --force 2>/dev/null || true`
-        - Delete old branch: `GITPRO_RUNNING=1 git branch -D working-title`
-        - Log: "Deleted old working-title branch (fully merged to main)"
-    - Create fresh working-title from current main: `GITPRO_RUNNING=1 git checkout -b working-title`
-    - Report: "✅ Created fresh working-title branch from main"
-11. Report success with summary of operations including version bump and new working branch
+          - Run `git worktree list | grep wt-${GITPRO_USER}` to check if worktree exists
+          - If worktree exists: Run `git worktree remove .git/beads-worktrees/wt-${GITPRO_USER} --force 2>/dev/null || true`
+        - Delete old branch: `GITPRO_RUNNING=1 git branch -D wt-${GITPRO_USER}`
+        - Log: "Deleted old wt-${GITPRO_USER} branch (fully merged to main)"
+    - Create fresh branch from current main: `GITPRO_RUNNING=1 git checkout -b wt-${GITPRO_USER}`
+    - Report: "✅ Created fresh wt-${GITPRO_USER} branch from main"
+12. Report success with summary of operations including version bump and new working branch
 
-**Result:** Clean merge to main with semantic version bump (single push includes both merge and version commits), plus fresh `working-title` branch ready for next feature.
+**Result:** Clean merge to main with semantic version bump (single push includes both merge and version commits), plus fresh `wt-${GITPRO_USER}` branch ready for next feature.
 
 **Key characteristics:**
 - Single push to main (merge commit + version bump commit together)
 - Explicit git commands for version bump (monorepo-compatible, doesn't rely on npm auto-commit)
 - Automatic semantic version analysis from commit messages
-- Fresh working-title branch created from updated main
+- Fresh user-specific working branch (`wt-${username}`) created from updated main
+- **Multi-user safe:** Each user gets their own working branch (e.g., `wt-pete`, `wt-john`)
 - **Beads worktree cleanup:** Removes any beads worktrees that block branch deletion
 
 ### New Branch - Create Working Branch
@@ -269,16 +269,17 @@ Create new branch with specified or default name.
 **When to use:** User says "create new branch" or "create branch called X"
 
 **Execution steps:**
-1. Run `git status` to check for uncommitted changes
-2. If changes exist, ask user: "There are uncommitted changes. Commit or checkpoint first? (commit/checkpoint/continue)"
-3. If user chooses commit, execute Commit workflow
-4. If user chooses checkpoint, execute Checkpoint workflow
-5. Determine branch name: use provided name or default to `working-title`
-6. Run `GITPRO_RUNNING=1 git checkout -b [branch-name]` to create and switch
-7. Run `GITPRO_RUNNING=1 git push -u origin [branch-name]` to push and track
-8. Report success with new branch name
+1. Get username for default branch naming: `GITPRO_USER=$(whoami)`
+2. Run `git status` to check for uncommitted changes
+3. If changes exist, ask user: "There are uncommitted changes. Commit or checkpoint first? (commit/checkpoint/continue)"
+4. If user chooses commit, execute Commit workflow
+5. If user chooses checkpoint, execute Checkpoint workflow
+6. Determine branch name: use provided name or default to `wt-${GITPRO_USER}`
+7. Run `GITPRO_RUNNING=1 git checkout -b [branch-name]` to create and switch
+8. Run `GITPRO_RUNNING=1 git push -u origin [branch-name]` to push and track
+9. Report success with new branch name
 
-**Default branch name:** `working-title`
+**Default branch name:** `wt-${username}` (e.g., `wt-pete`, `wt-john`)
 
 ## Validation Summary
 

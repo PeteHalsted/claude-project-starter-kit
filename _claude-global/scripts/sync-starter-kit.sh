@@ -63,44 +63,128 @@ check_project() {
     fi
 }
 
-# Compare AIRules
-compare_airules() {
-    local kit_path="$1"
-    local kit_airules="$kit_path/airules"
-    local project_airules="./AIRules"
+# MCP-dependent rules mapping
+# Format: rule_path:mcp_name:mcp_type (global or project)
+declare -a MCP_RULES=(
+    "integrations/ref.md:Ref:global"
+    "integrations/exa.md:exa:global"
+    "integrations/ClaudeChrome.md:claude-in-chrome:global"
+    "shadcn.md:shadcn-ui:project"
+)
 
-    header "=== AIRULES COMPARISON ==="
+# Check if global MCP is installed
+check_global_mcp() {
+    local mcp_name="$1"
+    # Use claude mcp list and check for the MCP name
+    if claude mcp list 2>/dev/null | grep -qi "$mcp_name"; then
+        return 0
+    fi
+    return 1
+}
+
+# Check if project MCP is installed
+check_project_mcp() {
+    local mcp_name="$1"
+    # Check .mcp.json for mcpServers containing the name
+    if [[ -f ".mcp.json" ]]; then
+        if grep -q "\"$mcp_name\"" ".mcp.json" 2>/dev/null; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
+# Check MCP dependencies for rules
+check_mcp_rules() {
+    local kit_path="$1"
+    local kit_rules="$kit_path/_claude-project/rules"
+    local project_rules="./.claude/rules"
+
+    header "=== MCP RULE DEPENDENCIES ==="
     echo ""
 
-    if [[ ! -d "$kit_airules" ]]; then
-        error "Starter kit missing airules/ folder"
+    local has_issues=0
+
+    for mapping in "${MCP_RULES[@]}"; do
+        local rule_path="${mapping%%:*}"
+        local rest="${mapping#*:}"
+        local mcp_name="${rest%%:*}"
+        local mcp_type="${rest##*:}"
+
+        local kit_rule="$kit_rules/$rule_path"
+        local project_rule="$project_rules/$rule_path"
+
+        # Skip if kit doesn't have this rule
+        [[ ! -f "$kit_rule" ]] && continue
+
+        local rule_exists=false
+        local mcp_installed=false
+
+        [[ -f "$project_rule" ]] && rule_exists=true
+
+        if [[ "$mcp_type" == "global" ]]; then
+            check_global_mcp "$mcp_name" && mcp_installed=true
+        else
+            check_project_mcp "$mcp_name" && mcp_installed=true
+        fi
+
+        if $rule_exists && ! $mcp_installed; then
+            warn "RULE WITHOUT MCP: $rule_path"
+            echo "  Rule exists but MCP '$mcp_name' not installed ($mcp_type)"
+            echo "  → Delete rule OR install MCP"
+            has_issues=1
+        elif ! $rule_exists && $mcp_installed; then
+            info "MCP WITHOUT RULE: $mcp_name"
+            echo "  MCP installed but rule '$rule_path' missing"
+            echo "  → Add rule from starter kit?"
+            has_issues=1
+        elif $rule_exists && $mcp_installed; then
+            success "OK: $rule_path ↔ $mcp_name"
+        fi
+    done
+
+    echo ""
+    return $has_issues
+}
+
+# Compare rules (from _claude-project-rules template to .claude/rules/)
+compare_rules() {
+    local kit_path="$1"
+    local kit_rules="$kit_path/_claude-project/rules"
+    local project_rules="./.claude/rules"
+
+    header "=== RULES COMPARISON ==="
+    echo ""
+
+    if [[ ! -d "$kit_rules" ]]; then
+        error "Starter kit missing _claude-project/rules/ folder"
     fi
 
     local has_changes=0
 
-    # Create AIRules if missing
-    if [[ ! -d "$project_airules" ]]; then
-        warn "AIRules/ folder missing in project"
+    # Create .claude/rules if missing
+    if [[ ! -d "$project_rules" ]]; then
+        warn ".claude/rules/ folder missing in project"
         has_changes=1
     fi
 
-    # Compare each kit file
-    for kit_file in "$kit_airules"/*.md; do
+    # Compare each kit file (recursively)
+    while IFS= read -r -d '' kit_file; do
         [[ -f "$kit_file" ]] || continue
 
-        local filename
-        filename=$(basename "$kit_file")
+        # Get relative path from kit_rules
+        local rel_path="${kit_file#$kit_rules/}"
 
         # Skip projectrules.md - always project-specific
-        if [[ "$filename" == "projectrules.md" ]]; then
-            echo "SKIP: $filename (project-specific)"
+        if [[ "$rel_path" == "projectrules.md" ]]; then
+            echo "SKIP: $rel_path (project-specific)"
             continue
         fi
 
-        local project_file="$project_airules/$filename"
+        local project_file="$project_rules/$rel_path"
 
         if [[ ! -f "$project_file" ]]; then
-            warn "NEW: $filename (not in project)"
+            warn "NEW: $rel_path (not in project)"
             has_changes=1
         else
             local kit_hash project_hash
@@ -108,27 +192,26 @@ compare_airules() {
             project_hash=$(md5 -q "$project_file")
 
             if [[ "$kit_hash" == "$project_hash" ]]; then
-                success "IDENTICAL: $filename"
+                success "IDENTICAL: $rel_path"
             else
-                warn "DIFFERS: $filename"
+                warn "DIFFERS: $rel_path"
                 has_changes=1
             fi
         fi
-    done
+    done < <(find "$kit_rules" -name "*.md" -type f -print0)
 
     # Check for project-only files
-    if [[ -d "$project_airules" ]]; then
-        for project_file in "$project_airules"/*.md; do
+    if [[ -d "$project_rules" ]]; then
+        while IFS= read -r -d '' project_file; do
             [[ -f "$project_file" ]] || continue
 
-            local filename
-            filename=$(basename "$project_file")
-            local kit_file="$kit_airules/$filename"
+            local rel_path="${project_file#$project_rules/}"
+            local kit_file="$kit_rules/$rel_path"
 
             if [[ ! -f "$kit_file" ]]; then
-                info "PROJECT-ONLY: $filename"
+                info "PROJECT-ONLY: $rel_path"
             fi
-        done
+        done < <(find "$project_rules" -name "*.md" -type f -print0)
     fi
 
     echo ""
@@ -204,84 +287,50 @@ audit_claude_md() {
     echo ""
 
     if [[ ! -f "CLAUDE.md" ]]; then
-        warn "CLAUDE.md missing"
+        warn "CLAUDE.md missing (optional - .claude/rules/ auto-discovers)"
+        echo ""
+        return 0  # Not an error - rules directory handles discovery
+    fi
+
+    # Check for legacy AGENTS.md import (deprecated)
+    if grep -q "@AGENTS.md" "CLAUDE.md"; then
+        warn "CLAUDE.md imports @AGENTS.md (deprecated - use .claude/rules/ instead)"
         echo ""
         return 1
     fi
 
-    # Check for @AGENTS.md import
-    if ! grep -q "@AGENTS.md" "CLAUDE.md"; then
-        warn "CLAUDE.md missing @AGENTS.md import"
+    # Check for legacy AIRules imports
+    if grep -qE "@AIRules/|@airules/" "CLAUDE.md"; then
+        warn "CLAUDE.md has legacy AIRules imports (migrate to .claude/rules/)"
         echo ""
         return 1
     fi
 
-    # Check for extra content beyond minimal template
-    # Minimal should only have: header, description, imports section, @AGENTS.md
-    # Any other @ imports or content = extra
-    local extra_imports
-    extra_imports=$(grep -E "^@" "CLAUDE.md" | grep -v "@AGENTS.md" || true)
-
-    local extra_content
-    extra_content=$(grep -vE "^#|^$|^@AGENTS.md|^This file provides|^\*\*\*|^## Imports" "CLAUDE.md" | grep -v "^[[:space:]]*$" || true)
-
-    if [[ -n "$extra_imports" || -n "$extra_content" ]]; then
-        warn "CLAUDE.md has extra content (should only import @AGENTS.md)"
-        if [[ -n "$extra_imports" ]]; then
-            echo "Extra imports found:"
-            echo "$extra_imports"
-        fi
-        if [[ -n "$extra_content" ]]; then
-            echo "Extra content found:"
-            echo "$extra_content" | head -10
-        fi
-        echo ""
-        return 1
-    fi
-
-    success "CLAUDE.md is minimal with @AGENTS.md import"
+    success "CLAUDE.md OK (no legacy imports)"
     echo ""
     return 0
 }
 
-# Analyze AGENTS.md
-analyze_agents_md() {
-    local kit_path="$1"
-    local kit_agents="$kit_path/AGENTS.md"
-
-    header "=== AGENTS.MD ANALYSIS ==="
+# Check for legacy AGENTS.md (deprecated)
+check_legacy_agents() {
+    header "=== LEGACY CHECK ==="
     echo ""
 
-    if [[ ! -f "AGENTS.md" ]]; then
-        warn "AGENTS.md missing in project"
+    if [[ -f "AGENTS.md" ]]; then
+        warn "AGENTS.md exists (deprecated - .claude/rules/ auto-discovers)"
+        echo "Consider deleting AGENTS.md and migrating imports to .claude/rules/"
         echo ""
         return 1
     fi
 
-    if [[ ! -f "$kit_agents" ]]; then
-        warn "AGENTS.md missing in starter kit"
+    if [[ -d "AIRules" ]]; then
+        warn "AIRules/ folder exists (deprecated - migrate to .claude/rules/)"
         echo ""
         return 1
     fi
 
-    # Extract imports from kit (canonical order)
-    echo "Kit imports (canonical order):"
-    grep -E "^@|^<!-- @" "$kit_agents" | head -20 || true
+    success "No legacy files found"
     echo ""
-
-    # Extract imports from project
-    echo "Project imports:"
-    grep -E "^@|^<!-- @" "AGENTS.md" | head -20 || true
-    echo ""
-
-    # Check for non-import content
-    local non_import_lines
-    non_import_lines=$(grep -cvE "^#|^@|^<!-- @|^$|^\*\*\*|^## " "AGENTS.md" 2>/dev/null || echo "0")
-
-    if [[ "$non_import_lines" -gt 5 ]]; then
-        warn "AGENTS.md has significant non-import content ($non_import_lines lines)"
-    fi
-
     return 0
 }
 
@@ -303,10 +352,11 @@ main() {
 
     local total_changes=0
 
-    compare_airules "$kit_path" || total_changes=1
+    compare_rules "$kit_path" || total_changes=1
+    check_mcp_rules "$kit_path" || total_changes=1
     compare_hooks "$kit_path" || total_changes=1
     audit_claude_md || total_changes=1
-    analyze_agents_md "$kit_path" || true  # Don't count as blocking change
+    check_legacy_agents || true  # Warn but don't block
 
     echo "=========================================="
     if [[ $total_changes -eq 0 ]]; then

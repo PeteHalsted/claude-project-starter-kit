@@ -12,11 +12,14 @@ Sync this project with the Claude Project Starter Kit. One-way sync: starter kit
 
 After running the script, you MUST report on ALL sections:
 
-### AIRules
+### Rules (.claude/rules/)
+Script compares starter kit's `.claude/rules/` with project's `.claude/rules/`.
 - List IDENTICAL files (brief)
 - List DIFFERS files with what changed
 - List NEW files available from kit
 - List PROJECT-ONLY files
+
+Note: `projectrules.md` is always skipped (project-specific).
 
 ### Git Hooks
 Script compares `_git-hooks-project/` (kit) with `.git/hooks/` (project).
@@ -26,79 +29,53 @@ Script outputs for each hook: OK, MISSING, DIFFERS, or NOT EXECUTABLE.
 - DIFFERS = both have hook but content differs
 - NOT EXECUTABLE = exists but needs chmod +x
 
-### CLAUDE.md (IMPORTANT)
-- If missing: offer to create minimal version
-- If ANY extra content beyond `@AGENTS.md` import: **WARN** - show extra content, suggest moving to AIRules/projectrules.md
-- If minimal (only imports @AGENTS.md): confirm OK
+### CLAUDE.md
+- If missing: OK (optional - .claude/rules/ auto-discovers)
+- If has legacy @AGENTS.md import: WARN - deprecated
+- If has legacy @AIRules imports: WARN - migrate needed
 
-### AGENTS.md (IMPORTANT - Intelligent Merge)
-You MUST perform intelligent analysis:
+### MCP Rule Dependencies
+Script checks MCP-dependent rules against installed MCPs:
+- RULE WITHOUT MCP: Rule exists but MCP not installed → suggest delete or install
+- MCP WITHOUT RULE: MCP installed but rule missing → suggest add rule
+- OK: Both rule and MCP present
 
-1. **Read both files** (both are in project ROOT, not AIRules/):
-   - Get starter kit path from `~/.claude/starter-kit-config.json` (field: `starterKitPath`)
-   - Read `{starterKitPath}/AGENTS.md` for canonical import order
-   - Read `./AGENTS.md` (current project root) for current state
+Global MCPs (checked via `claude mcp list`): Ref, exa, claude-in-chrome
+Project MCPs (checked in `.mcp.json`): shadcn-ui
 
-2. **Determine canonical order** (constitution.md LAST for recency bias):
-```
-@readme.md
-@airules/bashtools.md
-@airules/ClaudeChrome.md
-@airules/shadcn.md
-@airules/ref.md
-@airules/exa.md
-@airules/development-guidelines.md
-@airules/git.md
-@airules/projectrules.md
-@airules/constitution.md
-```
-
-3. **Analyze project's AGENTS.md**:
-   - Which imports are enabled vs commented out?
-   - Are they in the wrong order?
-   - Any imports missing that kit has?
-   - Any project-specific imports not in kit?
-   - Any non-import content?
-
-4. **Propose merged version**:
-   - Use kit's order
-   - Preserve project's enabled/disabled state
-   - New imports: ask enable or comment out
-   - Project-specific imports: keep at end, mark as custom
-   - Non-import content: preserve, announce
-
-5. **Show diff and ask for approval**
+### Legacy Check
+- If AGENTS.md exists: WARN - deprecated, suggest deletion
+- If AIRules/ folder exists: WARN - migrate to .claude/rules/
 
 ## Step 3: Take actions
 
 For each issue found, ask user what to do:
 
-### AIRules actions
+### Rules actions
 - DIFFERS: "Update [file] with kit version?"
-- NEW: "Add [file] to project?" → if yes, also add import to AGENTS.md
+- NEW: "Add [file] to project?" → copy to .claude/rules/
 - PROJECT-ONLY: "Keep as custom or delete?"
 
 ### Hook actions
 - Copy missing hooks
 - Make executable: `chmod +x .git/hooks/*`
 
-### CLAUDE.md actions
-- If bloated: show what to remove or move to projectrules.md
-- If missing: create minimal version
-
-### AGENTS.md actions
-- Show before/after diff
-- Apply if approved
+### Legacy migration actions
+If AGENTS.md or AIRules/ exist:
+1. Copy any project-specific rules to .claude/rules/
+2. Delete AGENTS.md
+3. Delete AIRules/ folder
+4. Update CLAUDE.md to remove legacy imports
 
 ## Output format
 
 ```
 === SYNC ANALYSIS ===
 
-AIRules: X identical, Y differs, Z new
+Rules: X identical, Y differs, Z new
 Git Hooks: X ok, Y needs attention
-CLAUDE.md: [OK | WARNING: X lines, should be ~7]
-AGENTS.md: [OK | NEEDS REORDER | X new imports available]
+CLAUDE.md: [OK | WARNING: has legacy imports]
+Legacy: [OK | WARNING: AGENTS.md/AIRules found]
 
 === DETAILS ===
 [details for each section]
@@ -108,4 +85,29 @@ AGENTS.md: [OK | NEEDS REORDER | X new imports available]
 2. [action]
 
 Proceed? [y/n/select]
+```
+
+## Native Rules Directory
+
+Starter kit templates in `_claude-project/rules/` sync to project's `.claude/rules/`:
+- All `.md` files auto-discovered (no imports needed)
+- Subdirectories supported (e.g., `integrations/`)
+- Path-targeting via YAML frontmatter (see project-documentation/path-targeting-rules.md)
+- MCP-dependent rules checked against installed MCPs
+
+Structure:
+```
+_claude-project/rules/          # Kit templates
+└── (syncs to)
+    project/.claude/rules/      # Project rules (auto-discovered)
+    ├── constitution.md         # Core rules
+    ├── development-guidelines.md
+    ├── git.md
+    ├── bashtools.md
+    ├── shadcn.md               # MCP: shadcn-ui (project)
+    ├── projectrules.md         # Project-specific (never synced)
+    └── integrations/
+        ├── ref.md              # MCP: Ref (global)
+        ├── exa.md              # MCP: exa (global)
+        └── ClaudeChrome.md     # MCP: claude-in-chrome (global)
 ```

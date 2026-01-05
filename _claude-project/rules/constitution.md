@@ -37,6 +37,8 @@ Never blame the library without proof. The fault is almost certainly in your cod
 
 **No TypeScript errors in committed code.** Enforced by git pre-commit hook.
 
+**LSP diagnostics are authoritative.** The LSP tool provides real-time TypeScript diagnostics. These errors are NOT suggestions - they are compilation failures. Ignoring LSP-reported errors is a CRITICAL FAILURE.
+
 | Forbidden Pattern | Why | Fix |
 |-------------------|-----|-----|
 | `_unusedVar` | Hides dead code | DELETE the code |
@@ -114,4 +116,25 @@ Toasts are deprecated. Use contextual feedback instead. See `development-guideli
 - Production code NEVER imports from `docs/`, `specs/`, `project-documentation/`.
 - Test with real APIs, not mocks.
 - Architecture separation: validation inline in production code, not imported from spec files.
+
+## XI. LSP Tool Usage
+
+**Use LSP for semantic code intelligence.** The LSP tool provides type-aware analysis superior to text-based search.
+
+| Operation | Use For |
+|-----------|---------|
+| `goToDefinition` | Find where symbol is defined |
+| `findReferences` | Find all usages of a symbol |
+| `hover` | Get type info and documentation |
+| `documentSymbol` | List all symbols in a file |
+| `workspaceSymbol` | Search symbols across codebase |
+| `goToImplementation` | Find interface implementations |
+| `incomingCalls` | Find callers of a function |
+| `outgoingCalls` | Find functions called by a function |
+
+**When to use LSP vs Grep:**
+- **LSP**: Type-aware queries ("what calls this function?", "what implements this interface?")
+- **Grep**: Text pattern matching ("find all TODO comments", "find hardcoded strings")
+
+**Diagnostics**: LSP provides real-time TypeScript errors. See Section III - ignoring these is a CRITICAL FAILURE.
 

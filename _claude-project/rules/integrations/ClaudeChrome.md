@@ -26,6 +26,33 @@ tabs_context_mcp({ createIfEmpty: true })
 tabs_context_mcp({ createIfEmpty: true })
 ```
 
+**Troubleshooting "Browser extension is not connected" Errors:**
+
+If `tabs_context_mcp` returns "Browser extension is not connected", follow these steps:
+
+1. **Kill stale native host process:**
+```bash
+ps aux | grep chrome-native-host | grep -v grep
+# Kill any stale processes found
+kill <PID>
+```
+
+2. **Kill stale Claude sessions** that may be holding the connection:
+```bash
+ps aux | grep claude | grep -v grep
+# Look for old sessions (check timestamps) and kill them
+kill <PID>
+```
+
+3. **User runs `/chrome` command** - This reinitializes the MCP connection. Ask the user to run `/chrome` in Claude Code.
+
+4. **Retry connection:**
+```typescript
+tabs_context_mcp({ createIfEmpty: true })
+```
+
+**Root Cause:** The native messaging host or stale Claude sessions can hold onto the extension connection, preventing new sessions from connecting.
+
 **Core Capabilities:**
 
 *Page Management & Navigation:*
@@ -108,8 +135,7 @@ tabs_context_mcp({ createIfEmpty: true })
 
 **Session Persistence Behavior:**
 
-Based on testing with Clerk OAuth:
-- **OAuth cookies persist** across browser restarts
+- **Auth cookies persist** across browser restarts
 - **Sessions remain active** even after closing browser completely
 - **Auto-redirect to authenticated pages** when navigating to root URL
 - **One-time manual OAuth login** is sufficient for ongoing automated testing
