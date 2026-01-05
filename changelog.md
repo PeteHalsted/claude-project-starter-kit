@@ -25,6 +25,14 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 #### ClaudeChrome Update
 - **Generic auth cookies**: Changed "OAuth cookies" to "Auth cookies" (removed Clerk-specific reference)
 
+#### Sync Script Enhancements
+- **Browser extension detection**: Detects ClaudeChrome via native messaging hosts
+- **MCP auto-install**: Added `install_mcp()` for Ref, exa, shadcn-ui with interactive prompts
+- **Interactive choices**: `[i]nstall / [r]emove / [s]kip` for missing MCP rules
+
+#### Pull-from-project Improvement
+- **Dynamic project discovery**: Lists projects with `.claude/rules/` from ~/projects via AskUserQuestion
+
 ---
 
 ### December 28, 2025

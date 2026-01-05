@@ -64,11 +64,11 @@ check_project() {
 }
 
 # MCP-dependent rules mapping
-# Format: rule_path:mcp_name:mcp_type (global or project)
+# Format: rule_path:mcp_name:mcp_type (global, project, or browser-extension)
 declare -a MCP_RULES=(
     "integrations/ref.md:Ref:global"
     "integrations/exa.md:exa:global"
-    "integrations/ClaudeChrome.md:claude-in-chrome:global"
+    "integrations/ClaudeChrome.md:claude-in-chrome:browser-extension"
     "shadcn.md:shadcn-ui:project"
 )
 
@@ -82,16 +82,100 @@ check_global_mcp() {
     return 1
 }
 
+# Check if browser extension is installed (via native messaging host)
+check_browser_extension() {
+    local ext_name="$1"
+
+    # Native messaging host locations for various Chromium browsers on macOS
+    local -a host_dirs=(
+        "$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts"
+        "$HOME/Library/Application Support/Chromium/NativeMessagingHosts"
+        "$HOME/Library/Application Support/BraveSoftware/Brave-Browser/NativeMessagingHosts"
+        "$HOME/Library/Application Support/Microsoft Edge/NativeMessagingHosts"
+        "$HOME/Library/Application Support/Arc/User Data/NativeMessagingHosts"
+    )
+
+    # Map extension names to native host manifest patterns
+    local manifest_pattern=""
+    case "$ext_name" in
+        "claude-in-chrome")
+            manifest_pattern="com.anthropic.claude_code_browser_extension.json"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+
+    # Check each browser's native messaging hosts directory
+    for dir in "${host_dirs[@]}"; do
+        if [[ -f "$dir/$manifest_pattern" ]]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 # Check if project MCP is installed
 check_project_mcp() {
     local mcp_name="$1"
+    local project_path="$PWD"
+
     # Check .mcp.json for mcpServers containing the name
     if [[ -f ".mcp.json" ]]; then
         if grep -q "\"$mcp_name\"" ".mcp.json" 2>/dev/null; then
             return 0
         fi
     fi
+
+    # Check ~/.claude.json for project-specific MCPs
+    # Claude Code stores project MCPs under projects.<path>.mcpServers
+    if [[ -f "$HOME/.claude.json" ]]; then
+        # Use jq if available for proper JSON parsing
+        if command -v jq &>/dev/null; then
+            if jq -e ".projects[\"$project_path\"].mcpServers[\"$mcp_name\"]" "$HOME/.claude.json" &>/dev/null; then
+                return 0
+            fi
+        else
+            # Fallback: grep for the MCP name near the project path
+            if grep -A100 "\"$project_path\"" "$HOME/.claude.json" 2>/dev/null | grep -q "\"$mcp_name\""; then
+                return 0
+            fi
+        fi
+    fi
+
     return 1
+}
+
+# Install MCP by name and type
+install_mcp() {
+    local mcp_name="$1"
+    local mcp_type="$2"
+
+    case "$mcp_name" in
+        "Ref")
+            echo "  Installing Ref MCP (global)..."
+            claude mcp add Ref --transport http https://api.ref.tools/mcp
+            ;;
+        "exa")
+            echo "  Installing exa MCP (global)..."
+            echo "  Note: Requires EXA_API_KEY environment variable"
+            claude mcp add exa -- npx -y mcp-remote "https://mcp.exa.ai/mcp?exaApiKey=\${EXA_API_KEY}"
+            ;;
+        "claude-in-chrome")
+            warn "  claude-in-chrome is a browser extension, not an MCP."
+            echo "  Install from: https://chromewebstore.google.com/detail/claude-in-chrome"
+            echo "  Then run: claude mcp add claude-in-chrome"
+            ;;
+        "shadcn-ui")
+            echo "  Installing shadcn-ui MCP (project)..."
+            claude mcp add shadcn-ui -- npx @jpisnice/shadcn-ui-mcp-server
+            ;;
+        *)
+            warn "  Unknown MCP: $mcp_name - manual installation required"
+            return 1
+            ;;
+    esac
 }
 
 # Check MCP dependencies for rules
@@ -122,22 +206,63 @@ check_mcp_rules() {
 
         [[ -f "$project_rule" ]] && rule_exists=true
 
-        if [[ "$mcp_type" == "global" ]]; then
-            check_global_mcp "$mcp_name" && mcp_installed=true
-        else
-            check_project_mcp "$mcp_name" && mcp_installed=true
-        fi
+        case "$mcp_type" in
+            "global")
+                check_global_mcp "$mcp_name" && mcp_installed=true
+                ;;
+            "browser-extension")
+                check_browser_extension "$mcp_name" && mcp_installed=true
+                ;;
+            "project")
+                check_project_mcp "$mcp_name" && mcp_installed=true
+                ;;
+        esac
 
         if $rule_exists && ! $mcp_installed; then
             warn "RULE WITHOUT MCP: $rule_path"
             echo "  Rule exists but MCP '$mcp_name' not installed ($mcp_type)"
-            echo "  → Delete rule OR install MCP"
-            has_issues=1
+            echo ""
+            echo "  Options:"
+            echo "    [i] Install MCP"
+            echo "    [r] Remove rule file"
+            echo "    [s] Skip"
+            echo -n "  Choice [i/r/s]: "
+            read -r choice
+            case "$choice" in
+                i|I)
+                    install_mcp "$mcp_name" "$mcp_type"
+                    ;;
+                r|R)
+                    rm -f "$project_rule"
+                    success "  Removed: $project_rule"
+                    ;;
+                *)
+                    echo "  Skipped"
+                    has_issues=1
+                    ;;
+            esac
+            echo ""
         elif ! $rule_exists && $mcp_installed; then
             info "MCP WITHOUT RULE: $mcp_name"
             echo "  MCP installed but rule '$rule_path' missing"
-            echo "  → Add rule from starter kit?"
-            has_issues=1
+            echo ""
+            echo "  Options:"
+            echo "    [a] Add rule from starter kit"
+            echo "    [s] Skip"
+            echo -n "  Choice [a/s]: "
+            read -r choice
+            case "$choice" in
+                a|A)
+                    mkdir -p "$(dirname "$project_rule")"
+                    cp "$kit_rule" "$project_rule"
+                    success "  Added: $project_rule"
+                    ;;
+                *)
+                    echo "  Skipped"
+                    has_issues=1
+                    ;;
+            esac
+            echo ""
         elif $rule_exists && $mcp_installed; then
             success "OK: $rule_path ↔ $mcp_name"
         fi
@@ -200,12 +325,18 @@ compare_rules() {
         fi
     done < <(find "$kit_rules" -name "*.md" -type f -print0)
 
-    # Check for project-only files
+    # Check for project-only files (skip project/ subfolder - always project-specific)
     if [[ -d "$project_rules" ]]; then
         while IFS= read -r -d '' project_file; do
             [[ -f "$project_file" ]] || continue
 
             local rel_path="${project_file#$project_rules/}"
+
+            # Skip project/ subfolder - always project-specific
+            if [[ "$rel_path" == project/* ]]; then
+                continue
+            fi
+
             local kit_file="$kit_rules/$rel_path"
 
             if [[ ! -f "$kit_file" ]]; then

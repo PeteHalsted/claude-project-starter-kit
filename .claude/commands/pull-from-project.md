@@ -11,15 +11,24 @@ if [[ ! -f ".claude/master.txt" ]]; then
 fi
 ```
 
-## Step 2: Get project path
+## Step 2: Discover and select project
 
-Ask user: "Which project to pull from?"
+Find projects with `.claude/rules/` folders:
 
-Suggest common paths:
-- `~/projects/mysite.nextagedesigns`
-- `~/projects/brochure-site-builder`
-- `~/projects/leakgopher`
-Or accept custom path.
+```bash
+# Find all projects with .claude/rules directories
+for dir in ~/projects/*/; do
+  if [[ -d "${dir}.claude/rules" ]]; then
+    echo "$(basename "$dir")"
+  fi
+done
+```
+
+Use `AskUserQuestion` tool to present discovered projects:
+- Show up to 4 projects as options (most recently modified first)
+- User can select one or choose "Other" to enter custom path
+- Option labels should be just the project name (e.g., "mysite.nextagedesigns")
+- Option descriptions should show the full path
 
 ## Step 3: Validate project
 
@@ -46,8 +55,9 @@ find "$PROJECT_PATH/.claude/rules" -name "*.md" -type f | while read project_fil
   rel_path="${project_file#$PROJECT_PATH/.claude/rules/}"
   kit_file="./_claude-project/rules/$rel_path"
 
-  # Skip projectrules.md - always project-specific
+  # Skip project-specific files and folders
   [[ "$rel_path" == "projectrules.md" ]] && continue
+  [[ "$rel_path" == project/* ]] && continue
 
   if [[ ! -f "$kit_file" ]]; then
     echo "NEW: $rel_path"
