@@ -9,11 +9,7 @@ This document describes how our team installs and uses **Beads (`bd`)** with **C
 Run once per machine:
 
 ```bash
-# Add the Beads tap (if needed)
-brew tap steveyegge/beads
-
-# Install the Beads CLI
-brew install bd
+brew install beads
 ```
 
 Verify the install:
@@ -74,19 +70,100 @@ The `~/.claude/settings.json` includes hooks that:
 |------|---------|
 | `~/.claude/hooks/beads-inject.sh` | Checks for `.beads`, outputs workflow if found |
 | `~/.claude/hooks/beads-workflow.md` | Custom workflow guide (our version, not `bd prime`) |
+| `~/.claude/skills/beads/SKILL.md` | Full command reference, invoked on demand |
 | `~/.claude/settings.json` | Hook configuration |
 
 ### Why Custom Hooks Instead of `bd prime`
 
 - **Full control** over workflow guidance
 - **No upstream surprises** when beads updates
-- **Custom label workflow** (coding → needs-testing → tested-local → deployed)
+- **Custom label workflow** (coding -> needs-testing -> tested-local -> deployed)
 - **AI autonomy boundaries** (what AI can/cannot close)
 - **Single source of truth** for our team's workflow
 
 ---
 
-## 4. Opting Out of Beads
+## 4. Sync Branch Configuration
+
+### Problem
+
+When `sync.branch` is set to `main`, two issues occur:
+
+1. **Worktree blocking**: Beads creates a worktree that locks `main`, causing `git checkout main` to fail during merge workflows
+2. **Dual CI/CD triggers**: `bd sync` pushes to main, then gitpro merge also pushes to main = two pipeline runs
+
+### Root Cause
+
+Beads uses git worktrees to commit to the sync branch without switching your working directory. When sync.branch = main, the worktree locks main:
+
+```
+fatal: 'main' is already checked out at '/path/.git/beads-worktrees/main'
+```
+
+### Solution
+
+Use a dedicated sync branch (not main):
+
+```bash
+# Set in database (takes effect immediately)
+bd config set sync.branch beads-sync
+
+# Also set in config.yaml (persists across clones)
+# Edit .beads/config.yaml:
+sync-branch: "beads-sync"
+```
+
+### Verification
+
+```bash
+# Check database setting
+sqlite3 .beads/beads.db "SELECT value FROM config WHERE key='sync.branch';"
+# Expected: beads-sync
+
+# Check worktree
+git worktree list
+# Should show worktree on beads-sync, NOT main
+
+# Check branch exists
+git branch -a | grep beads-sync
+```
+
+### Migration Steps (for existing repos with sync.branch = main)
+
+```bash
+# 1. Check current config
+bd config get sync.branch
+sqlite3 .beads/beads.db "SELECT value FROM config WHERE key='sync.branch';"
+
+# 2. If set to 'main', change it
+bd config set sync.branch beads-sync
+
+# 3. Update config.yaml for persistence across clones
+# Edit .beads/config.yaml, add/change:
+sync-branch: "beads-sync"
+
+# 4. Remove old worktree if it exists
+git worktree remove .git/beads-worktrees/main --force 2>/dev/null || true
+git worktree prune
+
+# 5. Run bd sync to create new worktree
+bd sync
+
+# 6. Verify
+git worktree list
+```
+
+### Expected Behavior After Fix
+
+| Operation | Branch | CI/CD Trigger |
+|-----------|--------|---------------|
+| `bd sync` | beads-sync | No |
+| `gitpro merge` | main | Yes (once) |
+| `git checkout main` | - | Works (no lock) |
+
+---
+
+## 5. Opting Out of Beads
 
 To disable beads integration for a user:
 
@@ -102,23 +179,24 @@ The hooks are smart - they only inject when `.beads/` exists. But removing the h
 
 ---
 
-## 5. Daily Usage
+## 6. Daily Usage
 
 When working with Claude Code in this repo:
 
 - Keep `.beads/` committed and synced with git
 - Use `bd` for persistent work planning and tracking:
-  - `bd ready` – show ready-to-work issues
-  - `bd create "Title" -t task -p 2` – create tasks/bugs/features
-  - `bd dep add <issue> <depends-on>` – manage dependencies
-  - `bd status` – project health overview
-  - `bd close <id> --suggest-next` – close and show newly unblocked (v0.37+)
+  - `bd list` - show non-closed issues (open + in_progress, limit 50)
+  - `bd ready` - show ready-to-work issues (unblocked)
+  - `bd create "Title" -t task -p 2 --notes "Context"` - create with notes
+  - `bd dep add <issue> --blocked-by <other>` - manage dependencies
+  - `bd status` - project health overview
+  - `bd close <id> --suggest-next` - close and show newly unblocked
 
 For command reference: `bd --help` or `bd <command> --help`
 
 ---
 
-## 6. Upgrading Beads
+## 7. Upgrading Beads
 
 ### Understanding the Data Model
 
@@ -131,7 +209,7 @@ For command reference: `bd --help` or `bd <command> --help`
 bd version
 
 # Upgrade via Homebrew
-brew upgrade bd
+brew upgrade beads
 
 # Trigger any pending migrations (any command works)
 bd list --json
@@ -154,15 +232,23 @@ bd import -i .beads/issues.jsonl
 
 Beads auto-imports from JSONL when it detects the JSONL is newer than the DB (e.g., after `git pull`). This provides built-in resilience during upgrades.
 
-### Updating the Workflow Guide
+### Updating Workflow Guidance
 
 After major beads upgrades, review release notes for new commands or workflow changes:
 
 1. Check releases: https://github.com/steveyegge/beads/releases
-2. Look for new commands, breaking changes, workflow improvements
-3. Update `_claude-global/hooks/beads-workflow.md` in the starter kit
-4. Run `/sync-global` to install
+2. Run `/beads-update` slash command to get changelog summary
+3. Update `_claude-global/hooks/beads-workflow.md` if needed
+4. Update `_claude-global/skills/beads/SKILL.md` if needed
+5. Run `/sync-global` to install
 
-**Source of truth**: `_claude-global/hooks/beads-workflow.md` in the starter kit
+**Source of truth**: `_claude-global/` files in the starter kit
 
-The hook at `~/.claude/hooks/beads-inject.sh` reads from `~/.claude/hooks/beads-workflow.md` and injects it when `.beads/` exists.
+---
+
+## 8. Reference
+
+- Beads docs: https://github.com/steveyegge/beads/blob/main/docs/CONFIG.md
+- Beads docs: https://github.com/steveyegge/beads/blob/main/docs/WORKTREES.md
+- Beads docs: https://github.com/steveyegge/beads/blob/main/docs/PROTECTED_BRANCHES.md
+- Releases: https://github.com/steveyegge/beads/releases

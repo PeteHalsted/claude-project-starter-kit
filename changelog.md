@@ -11,6 +11,25 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ---
 
+### January 7, 2026
+
+#### Beads Upgrade (0.37.0 → 0.46.0)
+- **Switched to homebrew-core**: Changed from tap `steveyegge/beads` to `brew install beads` (avoids stale tap issues)
+- **New features documented**: `--notes` on create, `--blocked-by`/`--depends-on` aliases, `--reason` on delete
+- **"beads state" trigger phrase**: New skill trigger for viewing non-closed beads grouped by status
+- **Fixed autonomy wording**: Changed "USER ONLY" to "requires explicit user request" (AI can do when asked)
+
+#### GitPro Enhancements
+- **Detailed merge triggers**: "merge to main", "merge from X" for clarity
+- **Auto-rename wt-* branches**: First meaningful commit renames worktree branch to descriptive name
+- **Beads sync post-commit**: Added post-commit beads sync step
+
+#### Documentation
+- **beads-setup.md**: Simplified install (no tap), updated daily usage commands
+- **beads-update.md**: Fixed package name for version check, added sync warning for master mode
+
+---
+
 ### January 5, 2026
 
 #### Skills Added

@@ -5,6 +5,7 @@
 - [React Hydration Issues](#react-hydration-issues)
 - [CJS/ESM Module Problems](#cjsesm-module-problems)
 - [Vite Configuration](#vite-configuration)
+- [Production Build Issues](#production-build-issues)
 - [Testing Server Functions](#testing-server-functions)
 - [Debug Utilities](#debug-utilities)
 
@@ -124,7 +125,7 @@ optimizeDeps: {
 
 ## Vite Configuration
 
-### Complete Example for TanStack Start
+### Complete Example for TanStack Start 1.145+
 
 ```typescript
 // vite.config.ts
@@ -132,11 +133,13 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [
     tsconfigPaths(),
-    tanstackStart(),
+    tailwindcss(),
+    tanstackStart(),  // No arguments! target and customViteReactPlugin removed in 1.132+
     react(),
   ],
   optimizeDeps: {
@@ -152,7 +155,9 @@ export default defineConfig({
     ],
   },
   ssr: {
-    noExternal: [/use-sync-external-store/, /cookie/],
+    // CRITICAL: seroval is required for TanStack Start server runtime
+    // Without it, you'll get module resolution errors in production
+    noExternal: [/use-sync-external-store/, /cookie/, /better-auth/, /seroval/],
   },
 })
 ```
@@ -168,6 +173,70 @@ rm -rf node_modules/.vite
 rm -rf apps/web/node_modules/.vite
 npm run build
 ```
+
+---
+
+## Production Build Issues
+
+### 404 Errors for Static Files (CSS/JS)
+
+**Symptom:** App loads but is unstyled, browser console shows 404 for `/assets/*.js` or `/assets/*.css`
+
+**Root Cause:** TanStack Start's fetch handler (dist/server/server.js) does NOT serve static files. It only handles SSR, server functions, and API routes.
+
+**Fix:** Add static file serving to your server runtime. See `references/production-deployment.md` for complete Hono setup.
+
+```javascript
+// In your server.mjs - serve static files BEFORE the catch-all
+app.use('/assets/*', serveStatic({ root: './dist/client' }))
+app.use('/images/*', serveStatic({ root: './dist/client' }))
+
+// TanStack handler as catch-all LAST
+app.all('*', (c) => handler.fetch(c.req.raw))
+```
+
+### "Cannot find module 'seroval'" in Production
+
+**Symptom:** Server crashes with module resolution error for seroval
+
+**Root Cause:** seroval not bundled into SSR build
+
+**Fix:** Add to `ssr.noExternal` in vite.config.ts:
+
+```typescript
+ssr: {
+  noExternal: [/seroval/],
+}
+```
+
+### tanstackStart() Options Error
+
+**Symptom:** Error about unknown options `target` or `customViteReactPlugin`
+
+**Root Cause:** These options were removed in TanStack Start 1.132+
+
+**Fix:** Remove all arguments from tanstackStart():
+
+```typescript
+// ❌ OLD (pre-1.132)
+tanstackStart({
+  target: 'node-server',
+  customViteReactPlugin: true,
+})
+
+// ✅ NEW (1.132+)
+tanstackStart()
+```
+
+### Wrong Version Displayed in Production
+
+**Symptom:** App shows old version number or "UNKNOWN"
+
+**Root Cause:** Reading from workspace package.json instead of root, or path priority wrong
+
+**Fix:** Check path order in version reading function. Docker cwd is `/app/apps/web`, so `cwd/package.json` finds workspace package.json first. Check root paths (`/app/package.json` or `../../package.json`) BEFORE `cwd/package.json`.
+
+See `references/production-deployment.md` for complete version reading pattern.
 
 ---
 

@@ -2,12 +2,85 @@
 
 ## Contents
 
+- [Key Distinction: Server Functions vs API Routes vs Production Server](#key-distinction-server-functions-vs-api-routes-vs-production-server)
 - [Shared Database Connection](#shared-database-connection)
 - [Server Function Pattern](#server-function-pattern)
 - [Input Validation](#input-validation)
 - [Server Function Composition](#server-function-composition)
 - [Cross-Domain vs Same-Domain](#cross-domain-vs-same-domain)
 - [Complete Example](#complete-example)
+
+---
+
+## Key Distinction: Server Functions vs API Routes vs Production Server
+
+TanStack Start has three distinct server-side concepts that are often confused:
+
+### 1. Server Functions (RPC Endpoints)
+
+**What**: Type-safe functions that run on the server, callable from client code.
+
+**Created with**: `createServerFn()`
+
+**Purpose**: Internal app logic - database queries, auth checks, business logic.
+
+**Bundled**: YES - Included in the TanStack Start build output.
+
+```typescript
+// Type-safe RPC - client calls like a function
+const data = await getProspects({ data: { search: 'test' } })
+```
+
+### 2. API Routes (Public HTTP Endpoints)
+
+**What**: Public HTTP endpoints for external systems (webhooks, third-party integrations).
+
+**Created with**: `createFileRoute()` with `server.handlers` in `routes/api/`
+
+**Purpose**: External access - Stripe webhooks, GitHub callbacks, public APIs.
+
+**Bundled**: YES - Included in the TanStack Start build output.
+
+```typescript
+// Public endpoint: POST /api/webhooks/stripe
+export const Route = createFileRoute('/api/webhooks/stripe')({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        const body = await request.text() // Raw for signature
+        // Handle webhook...
+      }
+    }
+  }
+})
+```
+
+### 3. Production Server Runtime
+
+**What**: HTTP server that wraps TanStack Start's fetch handler AND serves static files.
+
+**Created with**: Hono (recommended), Express, or other Node.js server.
+
+**Purpose**: Run the application in production.
+
+**NOT bundled**: This is YOUR code, separate from TanStack Start build.
+
+```javascript
+// server.mjs - Wraps TanStack Start handler
+import handler from './dist/server/server.js'
+app.all('*', (c) => handler.fetch(c.req.raw))
+```
+
+### Summary Table
+
+| Concept | Built with | Bundled? | Purpose |
+|---------|------------|----------|---------|
+| Server Functions | `createServerFn()` | Yes | Internal RPC |
+| API Routes | `createFileRoute()` + `server.handlers` | Yes | External webhooks |
+| Production Server | Hono/Express | No | Run the app |
+
+See `references/api-routes-webhooks.md` for API route patterns.
+See `references/production-deployment.md` for production server setup.
 
 ---
 

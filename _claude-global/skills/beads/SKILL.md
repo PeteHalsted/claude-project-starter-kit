@@ -7,6 +7,15 @@ description: Issue tracking and workflow management with beads (bd). Use this sk
 
 Full reference for beads (`bd`) issue tracking CLI. For critical rules, see the injected hook context.
 
+## Trigger Phrases
+
+**"beads state"** or **"show me beads state"**
+When user asks for beads state, run:
+```bash
+bd list                      # All non-closed (open + in_progress, includes active-now)
+```
+Present grouped by status: active-now highlighted first, then in_progress, then open.
+
 ## Status = Quality Gates
 
 - **`open`** - Brand new, untouched
@@ -29,6 +38,8 @@ Full reference for beads (`bd`) issue tracking CLI. For critical rules, see the 
 
 ## Workflow Progression
 
+Steps 3-4: AI executes when user requests. Never proactively.
+
 ```bash
 # 1. Claim work and start coding
 bd update nad-42 --status in_progress
@@ -40,11 +51,11 @@ bd label remove nad-42 active-now
 bd label remove nad-42 coding
 bd label add nad-42 needs-testing
 
-# 3. [USER] Testing passed
+# 3. Testing passed (on user request)
 bd label remove nad-42 needs-testing
 bd label add nad-42 tested-local
 
-# 4. [USER] Deployed to production
+# 4. Deployed to production (on user request)
 bd label remove nad-42 tested-local
 bd label remove nad-42 active-now   # ALWAYS remove before close
 bd label add nad-42 deployed
@@ -62,9 +73,12 @@ bd list --label active-now         # Session recovery
 # Completing work
 bd close nad-42 --suggest-next     # Close and show newly unblocked
 bd close nad-1 nad-2 nad-3         # Bulk close multiple issues
+bd delete nad-42 --reason "Duplicate of nad-38"  # Delete with audit trail (v0.41+)
 
 # Dependencies
 bd dep add <issue> <depends-on>                      # Blocking (default)
+bd dep add <issue> --blocked-by <other>              # Clearer alias (v0.44+)
+bd dep add <issue> --depends-on <other>              # Clearer alias (v0.44+)
 bd dep add <issue> <depends-on> --type related       # Related issues
 bd dep add <issue> <depends-on> --type discovered-from
 bd dep add <issue> <depends-on> --type parent-child  # Epic/subtask
@@ -86,6 +100,10 @@ bd create "Implement webhook handler" -t task -p 1 \
 # Acceptance criteria
 bd create "Fix contact form validation" -t bug -p 1 \
   --acceptance "Email field rejects addresses without @."
+
+# Notes on create (v0.43+)
+bd create "Add export feature" -t task -p 1 \
+  --notes "User requested CSV and JSON formats"
 
 # Notes during work
 bd update nad-42 --notes "Found this also affects prospects import."

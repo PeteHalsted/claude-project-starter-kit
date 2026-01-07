@@ -15,10 +15,10 @@
 - `bd create`, `bd update --status in_progress`, `bd label add/remove`
 - Mark code complete: `bd label add <id> needs-testing`
 
-**AI MUST NEVER do (user only):**
-- `bd label add <id> tested-local` - USER ONLY
-- `bd label add <id> deployed` - USER ONLY
-- `bd close <id>` - USER ONLY
+**AI MUST NOT do autonomously** (requires explicit user request):
+- `bd label add <id> tested-local`
+- `bd label add <id> deployed`
+- `bd close <id>`
 
 ## Active-Now Rule
 

@@ -9,12 +9,14 @@ The definitive guide to TanStack Start, Router, and Query patterns. This skill p
 
 ## Version Reference
 
-| Package | Version |
-|---------|---------|
-| `@tanstack/react-start` | 1.145.x |
-| `@tanstack/react-router` | 1.144.x |
-| `@tanstack/react-query` | 5.80.x |
-| `@tanstack/router-plugin` | 1.145.x |
+| Package | Version | Notes |
+|---------|---------|-------|
+| `@tanstack/react-start` | 1.145.x | fetch handler output (1.132+) |
+| `@tanstack/react-router` | 1.144.x | |
+| `@tanstack/react-query` | 5.80.x | |
+| `@tanstack/router-plugin` | 1.145.x | |
+| `hono` | 4.x | Recommended server runtime |
+| `@hono/node-server` | 1.x | Node.js adapter |
 
 ---
 
@@ -134,6 +136,10 @@ loader: async ({ deps }) => {
 | Debugging hydration issues | `references/debugging.md` |
 | CJS/ESM problems | `references/debugging.md` |
 | Testing server functions | `references/debugging.md` |
+| Production deployment | `references/production-deployment.md` |
+| Docker deployment | `references/production-deployment.md` |
+| Static file serving | `references/production-deployment.md` |
+| Hono server setup | `references/production-deployment.md` |
 | Code review for mistakes | `references/anti-patterns.md` |
 | Common errors to avoid | `references/anti-patterns.md` |
 
@@ -197,7 +203,38 @@ apps/web/
 │   │           └── prospect-details.tsx
 │   └── hooks/
 │       └── useProspects.ts
+├── server.mjs                       # Hono production server wrapper
+└── dist/                            # Build output (after vite build)
+    ├── server/server.js             # TanStack fetch handler (NOT standalone!)
+    └── client/                      # Static assets (JS, CSS, images)
 ```
+
+---
+
+## Production Server (Quick Reference)
+
+**CRITICAL**: TanStack Start outputs a fetch handler, NOT a runnable server. Wrap with Hono:
+
+```javascript
+// server.mjs - Hono wrapper for TanStack Start
+import { Hono } from 'hono'
+import { serve } from '@hono/node-server'
+import { serveStatic } from '@hono/node-server/serve-static'
+import handler from './dist/server/server.js'
+
+const app = new Hono()
+
+// Static files FIRST (TanStack doesn't serve these!)
+app.use('/assets/*', serveStatic({ root: './dist/client' }))
+app.use('/images/*', serveStatic({ root: './dist/client' }))
+
+// TanStack Start handles everything else
+app.all('*', (c) => handler.fetch(c.req.raw))
+
+serve({ fetch: app.fetch, port: 3001 })
+```
+
+See `references/production-deployment.md` for complete patterns.
 
 ---
 

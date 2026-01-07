@@ -7,6 +7,7 @@
 - [loaderDeps Mistakes](#loaderdeps-mistakes)
 - [Auth Logic Mistakes](#auth-logic-mistakes)
 - [Database Connection Mistakes](#database-connection-mistakes)
+- [Production Deployment Mistakes](#production-deployment-mistakes)
 - [Quick Reference Table](#quick-reference-table)
 
 ---
@@ -191,6 +192,83 @@ import { db } from '@/lib/db'
 
 ---
 
+## Production Deployment Mistakes
+
+### Don't Assume dist/server/server.js Is a Runnable Server
+
+```javascript
+// ❌ WRONG: Trying to run TanStack output directly
+node dist/server/server.js  // This doesn't work!
+
+// ✅ CORRECT: TanStack outputs a fetch handler, wrap with Hono
+// server.mjs
+import handler from './dist/server/server.js'
+app.all('*', (c) => handler.fetch(c.req.raw))
+```
+
+**Why**: TanStack Start 1.132+ outputs a Web-standard fetch handler, NOT a standalone HTTP server. You must wrap it with Hono, Express, or similar.
+
+### Don't Forget Static File Serving
+
+```javascript
+// ❌ WRONG: Only TanStack handler (CSS/JS return 404)
+app.all('*', (c) => handler.fetch(c.req.raw))
+
+// ✅ CORRECT: Static files BEFORE catch-all
+app.use('/assets/*', serveStatic({ root: './dist/client' }))
+app.use('/images/*', serveStatic({ root: './dist/client' }))
+app.all('*', (c) => handler.fetch(c.req.raw))  // Last!
+```
+
+**Why**: TanStack Start handler processes SSR and server functions. It does NOT serve static files from `dist/client/`.
+
+### Don't Pass Arguments to tanstackStart()
+
+```typescript
+// ❌ WRONG: These options were removed in 1.132+
+tanstackStart({
+  target: 'node-server',
+  customViteReactPlugin: true,
+})
+
+// ✅ CORRECT: No arguments needed
+tanstackStart()
+```
+
+### Don't Forget seroval in ssr.noExternal
+
+```typescript
+// ❌ WRONG: Missing seroval (will crash in production)
+ssr: {
+  noExternal: [/use-sync-external-store/, /cookie/],
+}
+
+// ✅ CORRECT: Include seroval for TanStack Start runtime
+ssr: {
+  noExternal: [/use-sync-external-store/, /cookie/, /seroval/],
+}
+```
+
+**Why**: seroval is used by TanStack Start for data serialization between server and client.
+
+### Don't Read Version from Workspace package.json
+
+```typescript
+// ❌ WRONG: In Docker, cwd is apps/web, finds stale workspace version
+const pkg = JSON.parse(readFileSync('package.json'))
+
+// ✅ CORRECT: Check root paths FIRST
+const possiblePaths = [
+  '/app/package.json',               // Docker root (highest priority)
+  resolve(cwd, '../../package.json'), // From apps/web to root
+  resolve(cwd, 'package.json'),       // Fallback
+]
+```
+
+**Why**: npm workspaces change cwd to the workspace directory. Root package.json should be single source of truth for version.
+
+---
+
 ## Quick Reference Table
 
 | Pattern | Wrong | Correct |
@@ -205,6 +283,11 @@ import { db } from '@/lib/db'
 | DB connections | Create per request | Shared connection |
 | Cache keys | `['prospects']` | `['prospect']` (singular) |
 | Server fn params | `fn({ search })` | `fn({ data: { search } })` |
+| Production server | Run server.js directly | Wrap with Hono |
+| Static files | TanStack handler only | Serve before catch-all |
+| tanstackStart() | Pass config options | No arguments |
+| ssr.noExternal | Missing seroval | Include seroval |
+| Version source | Workspace package.json | Root package.json |
 
 ---
 
@@ -247,4 +330,33 @@ Usually means CJS/ESM issues:
 ```typescript
 // Fix: Add to vite.config.ts optimizeDeps.include
 // See debugging.md for details
+```
+
+### 404 for CSS/JS in Production
+
+TanStack Start handler doesn't serve static files:
+
+```javascript
+// Fix: Add static file routes BEFORE catch-all in server.mjs
+app.use('/assets/*', serveStatic({ root: './dist/client' }))
+```
+
+### "Cannot find module 'seroval'"
+
+Missing from ssr.noExternal:
+
+```typescript
+// Fix: Add seroval to vite.config.ts
+ssr: {
+  noExternal: [/seroval/],
+}
+```
+
+### Wrong Version Displayed
+
+Reading from workspace package.json instead of root:
+
+```typescript
+// Fix: Check root paths first, Docker cwd is apps/web
+// See production-deployment.md for correct path order
 ```
