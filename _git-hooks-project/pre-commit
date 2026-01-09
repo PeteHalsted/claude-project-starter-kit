@@ -2,7 +2,7 @@
 # Pre-commit hook: TypeScript validation + Beads sync + TODO tracking
 #
 # This hook enforces:
-# 1. TypeScript errors in staged files (BLOCKING - zero tolerance)
+# 1. TypeScript errors (BLOCKING - zero tolerance for ENTIRE codebase)
 # 2. Beads database sync (if beads is used)
 # 3. TODO comment validation (if beads is used)
 #
@@ -19,54 +19,33 @@
 
 # ============================================
 # PART 1: TYPESCRIPT VALIDATION (BLOCKING)
-# Zero tolerance for TypeScript errors in staged files
+# Zero tolerance - ANY error in codebase blocks commit
+# No filtering. No exceptions. Pass or fail.
 # ============================================
 
-# Skip if bypass requested (checkpoints)
 if [ "$SKIP_TS_CHECK" != "1" ]; then
-    # Check if this is a TypeScript project
     if [ -f "package.json" ] && grep -q '"check-types"' package.json 2>/dev/null; then
-        # Get staged TypeScript files
-        STAGED_TS=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$' || true)
+        echo "🔍 Running TypeScript check (entire codebase)..."
 
-        if [ -n "$STAGED_TS" ]; then
-            echo "🔍 Checking TypeScript errors in staged files..."
-
-            # Run type check and capture output
-            TS_OUTPUT=$(npm run check-types 2>&1 || true)
-
-            # Filter errors to only staged files
-            STAGED_ERRORS=""
-            while IFS= read -r file; do
-                # Extract errors for this file (handles various tsc output formats)
-                FILE_ERRORS=$(echo "$TS_OUTPUT" | grep -E "^${file}[:(]" || true)
-                if [ -n "$FILE_ERRORS" ]; then
-                    STAGED_ERRORS="${STAGED_ERRORS}${FILE_ERRORS}"$'\n'
-                fi
-            done <<< "$STAGED_TS"
-
-            if [ -n "$STAGED_ERRORS" ]; then
-                echo ""
-                echo "🚫 TYPESCRIPT ERRORS BLOCKED"
-                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-                echo "$STAGED_ERRORS"
-                echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-                echo ""
-                echo "You MUST fix ALL TypeScript errors before committing."
-                echo ""
-                echo "FORBIDDEN fixes (these hide problems, don't solve them):"
-                echo "  - _unusedVariable  → DELETE the unused code"
-                echo "  - : any            → Use proper types"
-                echo "  - // @ts-ignore    → Fix the underlying issue"
-                echo "  - as any           → Use type narrowing"
-                echo ""
-                echo "Bypass (checkpoint only): SKIP_TS_CHECK=1 git commit ..."
-                echo ""
-                exit 1
-            fi
-
-            echo "✅ No TypeScript errors in staged files"
+        if ! npm run check-types 2>&1; then
+            echo ""
+            echo "🚫 TYPESCRIPT ERRORS - COMMIT BLOCKED"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            echo "Fix ALL TypeScript errors before committing."
+            echo ""
+            echo "FORBIDDEN fixes (these hide problems, don't solve them):"
+            echo "  - _unusedVariable  → DELETE the unused code"
+            echo "  - : any            → Use proper types"
+            echo "  - // @ts-ignore    → Fix the underlying issue"
+            echo "  - as any           → Use type narrowing"
+            echo ""
+            echo "Bypass (checkpoint only): SKIP_TS_CHECK=1 git commit ..."
+            echo ""
+            exit 1
         fi
+
+        echo "✅ TypeScript passed"
     fi
 fi
 

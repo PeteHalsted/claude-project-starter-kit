@@ -1,6 +1,13 @@
 ---
 name: gitpro
 description: ALWAYS use this skill for ALL git operations. NEVER run git commit, git add, git push, git merge, git checkout -b, or git branch -m directly. This skill automates git workflows with conventional commits, automatic changelog updates, semantic version bumping, and consistent formatting. Use when user requests checkpoint, commit, rename branch, merge, or create new branch operations.
+hooks:
+  PreToolUse:
+    - matcher: Bash
+      hooks:
+        - type: command
+          command: ~/.claude/skills/gitpro/scripts/create-token.sh
+          timeout: 5
 ---
 
 # GitPro
@@ -15,7 +22,6 @@ Git workflow automation for common operations with intelligent defaults and best
 3. Execute steps sequentially as written in each workflow
 4. Use the provided scripts and references from the base directory
 5. Report progress and results as the skill, not as Claude running bash commands
-6. **CRITICAL**: Prefix ALL git commands with `GITPRO_RUNNING=1` to bypass the git-guard hook (e.g., `GITPRO_RUNNING=1 git add -A`)
 
 **FORBIDDEN while executing this skill:**
 - Running `git commit` directly instead of following the workflow
@@ -50,7 +56,7 @@ Create fast timestamped commits during active work without analysis overhead.
 
 **Execution steps:**
 1. Run `git status` to check staged files
-2. If no files staged, run `GITPRO_RUNNING=1 git add -A` to stage all changes
+2. If no files staged, run `git add -A` to stage all changes
 3. If nothing to commit, exit with message "No changes to checkpoint"
 4. Execute `bash ~/.claude/skills/gitpro/scripts/get_timestamp.sh` to get local timezone timestamp
 5. Determine commit message format:
@@ -72,7 +78,7 @@ Create fast timestamped commits during active work without analysis overhead.
        - Report: "Updated bead <bead-id> notes"
      - **If no active bead:** Skip silently
    - **If .beads/ does not exist:** Skip this step
-7. Run `GITPRO_RUNNING=1 git commit -m "[message]"` with appropriate format   
+7. Run `git commit -m "[message]"` with appropriate format   
 8. Report success to user
 
 **Key characteristics:**
@@ -101,17 +107,17 @@ Create full conventional commits with changelog integration and proper formattin
    - Check if `.beads/` directory exists in repository root
    - **If .beads/ exists:** Run `bd sync` to commit any pending beads changes
    - **If .beads/ does not exist:** Skip this step
-3. Run `GITPRO_RUNNING=1 git add -A` to stage ALL changes (modifications, additions, deletions)
+3. Run `git add -A` to stage ALL changes (modifications, additions, deletions)
 4. Run `git diff --staged --name-only` to get list of changed files
 5. **Auto-rename wt-* branch (first meaningful commit):**
    - Get current branch: `git branch --show-current`
    - **If branch matches `wt-*` pattern** (e.g., `wt-petehalsted`):
      - Analyze staged changes to determine descriptive branch name using kebab-case
      - Store old branch name (the wt-* name)
-     - Run `GITPRO_RUNNING=1 git branch -m [descriptive-name]` to rename locally
+     - Run `git branch -m [descriptive-name]` to rename locally
      - **Clean up old remote (if exists):**
        - Check: `git ls-remote --heads origin [old-wt-branch]`
-       - If exists: `GITPRO_RUNNING=1 git push origin --delete [old-wt-branch]`
+       - If exists: `git push origin --delete [old-wt-branch]`
      - Report: "Auto-renamed: [old-wt-branch] → [descriptive-name]"
    - **Otherwise:** Skip (branch already has descriptive name)
 6. **Conditional changelog update:**
@@ -120,7 +126,7 @@ Create full conventional commits with changelog integration and proper formattin
      - Read first 30-50 lines to understand date format and entry pattern
      - Add new entry at top for today's date following the established pattern
      - Summarize the staged changes
-     - Run `GITPRO_RUNNING=1 git add changelog.md` to stage the updated changelog
+     - Run `git add changelog.md` to stage the updated changelog
    - **If changelog.md does NOT exist:**
      - Skip changelog update
      - Add note to final report: "No changelog updated (changelog.md not found in repository)"
@@ -146,9 +152,9 @@ Create full conventional commits with changelog integration and proper formattin
     - **If on `main` branch AND commit is a fix/hotfix:**
       - Run `npm version patch --no-git-tag-version` to bump version (uses root package.json)
       - Capture new version from output
-      - Run `GITPRO_RUNNING=1 git add package.json package-lock.json`
+      - Run `git add package.json package-lock.json`
       - Include version files in the commit (step 14)
-      - Run `GITPRO_RUNNING=1 git tag [version]` after commit
+      - Run `git tag [version]` after commit
     - **Otherwise:** Skip version bumping (only done during merge workflow)
 13. **Bead notes update (if active-now bead exists):**
     - Check if `.beads/` directory exists in repository root
@@ -167,7 +173,7 @@ Create full conventional commits with changelog integration and proper formattin
         - Report: "Updated bead <bead-id> notes"
       - **If no active bead:** Skip silently
     - **If .beads/ does not exist:** Skip this step    
-14. Run `GITPRO_RUNNING=1 git commit -m "<message>"` to commit everything together (if version not already committed)
+14. Run `git commit -m "<message>"` to commit everything together (if version not already committed)
 15. **Beads sync (post-commit):**
     - Check if `.beads/` directory exists in repository root
     - **If .beads/ exists:** Run `bd sync` to commit any beads changes made during the session
@@ -175,7 +181,7 @@ Create full conventional commits with changelog integration and proper formattin
 16. **Automatic push (non-main branches only):**
     - Get current branch with `git branch --show-current`
     - **If NOT on `main` branch:**
-      - Run `GITPRO_RUNNING=1 git push` (or `GITPRO_RUNNING=1 git push -u origin [branch-name]` if no upstream)
+      - Run `git push` (or `git push -u origin [branch-name]` if no upstream)
       - Report successful commit and push to user
     - **If on `main` branch:**
       - Skip automatic push to prevent unintended CI/CD triggers
@@ -209,13 +215,13 @@ Rename current branch based on actual work being done.
 2. If user provided explicit name, skip to step 5
 3. Run `git diff main...HEAD` to see what changed
 4. Analyze changed files to determine descriptive branch name using kebab-case
-5. Run `GITPRO_RUNNING=1 git branch -m [new-branch-name]` to rename locally
+5. Run `git branch -m [new-branch-name]` to rename locally
 6. **Clean up old remote branch (if exists):**
    - Check if old branch exists on remote: `git ls-remote --heads origin [old-branch-name]`
-   - **If exists:** Run `GITPRO_RUNNING=1 git push origin --delete [old-branch-name]`
+   - **If exists:** Run `git push origin --delete [old-branch-name]`
    - Report: "Deleted old remote branch: [old-branch-name]"
 7. **Push new branch with tracking:**
-   - Run `GITPRO_RUNNING=1 git push -u origin [new-branch-name]`
+   - Run `git push -u origin [new-branch-name]`
 8. Run `git branch -vv` to verify rename and tracking
 9. Report: "Renamed: [old-branch-name] → [new-branch-name] (tracking origin)"
 
@@ -236,10 +242,10 @@ Execute full merge workflow from commit through version bumping, branch cleanup,
 2. Run `git status` to check for uncommitted changes
 3. If changes exist, execute full Commit workflow first (includes TypeScript validation)
 4. Get current branch name with `git branch --show-current`
-5. Run `GITPRO_RUNNING=1 git push origin [current-branch]` to push current branch
+5. Run `git push origin [current-branch]` to push current branch
 6. Run `git checkout main` to switch to main
 7. Run `git pull` to update main
-8. Run `GITPRO_RUNNING=1 git merge [current-branch]` to merge
+8. Run `git merge [current-branch]` to merge
 9. **Intelligent version bumping (MUST COMPLETE BEFORE PUSH):**
    - Run `git log --oneline main~10..main` to analyze recent commits
    - Determine version bump type by examining commit messages:
@@ -250,20 +256,20 @@ Execute full merge workflow from commit through version bumping, branch cleanup,
      - Run `npm version [major|minor|patch] --no-git-tag-version` to bump version
      - Capture the new version number from output (e.g., `v1.5.1`)
    - **Explicitly commit version bump:**
-     - Run `GITPRO_RUNNING=1 git add package.json package-lock.json`
-     - Run `GITPRO_RUNNING=1 git commit -m "🔖 chore: bump version to [version]"`
-     - Run `GITPRO_RUNNING=1 git tag [version]` (e.g., `v1.5.1`)
+     - Run `git add package.json package-lock.json`
+     - Run `git commit -m "🔖 chore: bump version to [version]"`
+     - Run `git tag [version]` (e.g., `v1.5.1`)
    - **WAIT for this step to complete before proceeding to step 10**
 10. **Push main WITH version bump (after step 9 completes):**
-    - Run `GITPRO_RUNNING=1 git push` to push main (includes merge commit AND version bump commit)
-    - Run `GITPRO_RUNNING=1 git push --tags` to push version tags
+    - Run `git push` to push main (includes merge commit AND version bump commit)
+    - Run `git push --tags` to push version tags
     - **CRITICAL:** Both the merge AND the version bump commit must be included in the push
 11. **Delete merged source branch (cleanup):**
     - Store the source branch name from step 4 (the branch that was merged)
     - Verify branch is merged: `git branch --merged main | grep [source-branch]`
     - **If verified merged:**
-      - Delete local branch: `GITPRO_RUNNING=1 git branch -d [source-branch]`
-      - Delete remote branch: `GITPRO_RUNNING=1 git push origin --delete [source-branch]`
+      - Delete local branch: `git branch -d [source-branch]`
+      - Delete remote branch: `git push origin --delete [source-branch]`
       - Report: "🗑️ Deleted merged branch: [source-branch]"
     - **If NOT verified merged:** Skip deletion with warning (safety first)
 12. **Create fresh user working branch (with safety check):**
@@ -277,10 +283,10 @@ Execute full merge workflow from commit through version bumping, branch cleanup,
         - **Check for beads worktree blocking deletion:**
           - Run `git worktree list | grep wt-${GITPRO_USER}` to check if worktree exists
           - If worktree exists: Run `git worktree remove .git/beads-worktrees/wt-${GITPRO_USER} --force 2>/dev/null || true`
-        - Delete old branch: `GITPRO_RUNNING=1 git branch -D wt-${GITPRO_USER}`
+        - Delete old branch: `git branch -D wt-${GITPRO_USER}`
         - Log: "Deleted old wt-${GITPRO_USER} branch (fully merged to main)"
-    - Create fresh branch from current main: `GITPRO_RUNNING=1 git checkout -b wt-${GITPRO_USER}`
-    - Push with upstream tracking: `GITPRO_RUNNING=1 git push -u origin wt-${GITPRO_USER}`
+    - Create fresh branch from current main: `git checkout -b wt-${GITPRO_USER}`
+    - Push with upstream tracking: `git push -u origin wt-${GITPRO_USER}`
     - Report: "✅ Created fresh wt-${GITPRO_USER} branch from main (tracking origin)"
 13. Report success with summary of operations including version bump, branch cleanup, and new working branch
 
@@ -311,7 +317,7 @@ Merge another branch into your current working branch. Useful for pulling in clo
    - Check if it exists locally: `git branch --list [branch]`
    - Check if it exists on remote: `git branch -r --list origin/[branch]`
    - **If branch not found:** Report error and exit
-4. Run `GITPRO_RUNNING=1 git merge origin/[branch]` (or local branch if no remote)
+4. Run `git merge origin/[branch]` (or local branch if no remote)
 5. **If merge conflicts:**
    - Report: "⚠️ Merge conflicts detected. Please resolve conflicts and run 'commit' when ready."
    - Exit workflow (user must resolve manually)
@@ -321,8 +327,8 @@ Merge another branch into your current working branch. Useful for pulling in clo
    - **If source branch is `main` or `master`:** Skip deletion entirely (never prompt)
    - **Otherwise:** Ask user: "Delete branch [branch]? (y/n)"
    - **If user confirms yes:**
-     - Delete local branch (if exists): `GITPRO_RUNNING=1 git branch -d [branch]`
-     - Delete remote branch (if exists): `GITPRO_RUNNING=1 git push origin --delete [branch]`
+     - Delete local branch (if exists): `git branch -d [branch]`
+     - Delete remote branch (if exists): `git push origin --delete [branch]`
      - Report: "🗑️ Deleted branch: [branch]"
    - **If user says no:** Skip deletion
 8. Report success with summary
@@ -354,8 +360,8 @@ Create new branch with specified or default name.
 4. If user chooses commit, execute Commit workflow
 5. If user chooses checkpoint, execute Checkpoint workflow
 6. Determine branch name: use provided name or default to `wt-${GITPRO_USER}`
-7. Run `GITPRO_RUNNING=1 git checkout -b [branch-name]` to create and switch
-8. Run `GITPRO_RUNNING=1 git push -u origin [branch-name]` to push and track
+7. Run `git checkout -b [branch-name]` to create and switch
+8. Run `git push -u origin [branch-name]` to push and track
 9. Report success with new branch name
 
 **Default branch name:** `wt-${username}` (e.g., `wt-pete`, `wt-john`)

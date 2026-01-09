@@ -349,7 +349,7 @@ compare_rules() {
     return $has_changes
 }
 
-# Compare git hooks
+# Compare and install git hooks
 compare_hooks() {
     local kit_path="$1"
     local kit_hooks="$kit_path/_git-hooks-project"
@@ -387,7 +387,25 @@ compare_hooks() {
 
         if [[ ! -f "$project_hook" ]]; then
             warn "MISSING: $filename"
-            has_changes=1
+            echo "  Hook not installed in project"
+            echo ""
+            echo "  Options:"
+            echo "    [i] Install hook from starter kit"
+            echo "    [s] Skip"
+            echo -n "  Choice [i/s]: "
+            read -r choice
+            case "$choice" in
+                i|I)
+                    cp "$kit_hook" "$project_hook"
+                    chmod +x "$project_hook"
+                    success "  Installed: $filename"
+                    ;;
+                *)
+                    echo "  Skipped"
+                    has_changes=1
+                    ;;
+            esac
+            echo ""
         else
             local kit_hash project_hash
             kit_hash=$(md5 -q "$kit_hook")
@@ -399,11 +417,69 @@ compare_hooks() {
                     success "OK: $filename"
                 else
                     warn "NOT EXECUTABLE: $filename"
-                    has_changes=1
+                    echo ""
+                    echo "  Options:"
+                    echo "    [f] Fix permissions (chmod +x)"
+                    echo "    [s] Skip"
+                    echo -n "  Choice [f/s]: "
+                    read -r choice
+                    case "$choice" in
+                        f|F)
+                            chmod +x "$project_hook"
+                            success "  Fixed: $filename is now executable"
+                            ;;
+                        *)
+                            echo "  Skipped"
+                            has_changes=1
+                            ;;
+                    esac
+                    echo ""
                 fi
             else
                 warn "DIFFERS: $filename"
-                has_changes=1
+                echo "  Project hook differs from starter kit"
+                echo ""
+                echo "  Options:"
+                echo "    [u] Update with starter kit version"
+                echo "    [d] Show diff"
+                echo "    [s] Skip (keep project version)"
+                echo -n "  Choice [u/d/s]: "
+                read -r choice
+                case "$choice" in
+                    u|U)
+                        cp "$kit_hook" "$project_hook"
+                        chmod +x "$project_hook"
+                        success "  Updated: $filename"
+                        ;;
+                    d|D)
+                        echo ""
+                        echo "--- Project version"
+                        echo "+++ Starter kit version"
+                        diff "$project_hook" "$kit_hook" || true
+                        echo ""
+                        echo "  Options:"
+                        echo "    [u] Update with starter kit version"
+                        echo "    [s] Skip (keep project version)"
+                        echo -n "  Choice [u/s]: "
+                        read -r choice2
+                        case "$choice2" in
+                            u|U)
+                                cp "$kit_hook" "$project_hook"
+                                chmod +x "$project_hook"
+                                success "  Updated: $filename"
+                                ;;
+                            *)
+                                echo "  Skipped"
+                                has_changes=1
+                                ;;
+                        esac
+                        ;;
+                    *)
+                        echo "  Skipped"
+                        has_changes=1
+                        ;;
+                esac
+                echo ""
             fi
         fi
     done

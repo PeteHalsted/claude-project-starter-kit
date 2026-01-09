@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Block console.log in projects using Adze logger
-# Only activates if package.json contains "adze" dependency
+# Block console.log in projects using Pino logger
+# Only activates if package.json contains "pino" dependency
 
 INPUT=$(cat)
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name')
@@ -11,15 +11,15 @@ if [ "$TOOL_NAME" != "Edit" ] && [ "$TOOL_NAME" != "Write" ]; then
     exit 0
 fi
 
-# Check if project uses Adze (skip if not)
+# Check if project uses Pino (skip if not)
 if [ ! -f "package.json" ]; then
     exit 0
 fi
 
-if ! grep -q '"adze"' package.json 2>/dev/null; then
+if ! grep -q '"pino"' package.json 2>/dev/null; then
     # Also check for monorepo shared package
     if [ -f "packages/shared/package.json" ]; then
-        if ! grep -q '"adze"' packages/shared/package.json 2>/dev/null; then
+        if ! grep -q '"pino"' packages/shared/package.json 2>/dev/null; then
             exit 0
         fi
     else
@@ -43,7 +43,7 @@ if echo "$NEW_CONTENT" | grep -qE 'console\.(log|error|warn|info|debug)'; then
   "hookSpecificOutput": {
     "hookEventName": "PreToolUse",
     "permissionDecision": "deny",
-    "permissionDecisionReason": "🚫 CONSOLE.LOG BLOCKED\n\nThis project uses Adze for structured logging.\n\nYou wrote:\n$(echo "$NEW_CONTENT" | grep -E 'console\.(log|error|warn|info|debug)' | head -3 | sed 's/"/\\"/g')\n\nUse Adze instead:\n  import { createLogger } from '@mysite/shared/logger';\n  const logger = createLogger('namespace');\n  logger.log('message');\n\nSee: project-documentation/logging-with-adze.md"
+    "permissionDecisionReason": "🚫 CONSOLE.LOG BLOCKED\n\nThis project uses Pino for structured logging.\n\nYou wrote:\n$(echo "$NEW_CONTENT" | grep -E 'console\.(log|error|warn|info|debug)' | head -3 | sed 's/"/\\"/g')\n\nUse Pino instead:\n  import { logger } from '~/lib/logger';\n  logger.info('message');\n  logger.error({ err }, 'error message');\n\nSee: project-documentation/logging-with-pino.md"
   }
 }
 BLOCK

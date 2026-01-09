@@ -53,11 +53,11 @@ Never blame the library without proof. The fault is almost certainly in your cod
 | TS2339 (property missing) | Fix type def |
 | TS2322 (type mismatch) | Fix at source |
 
-## IV. No Console.log (Adze Projects)
+## IV. No Console.log
 
-**In projects using Adze, console.log is FORBIDDEN.** Enforced by PreToolUse hook.
+**console.log is FORBIDDEN.** Enforced by PreToolUse hook.
 
-Use structured logging with Adze namespaces. See `project-documentation/logging-with-adze.md`.
+Use Pino structured logging with namespaced loggers.
 
 ## V. Database & Naming
 

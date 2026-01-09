@@ -20,14 +20,15 @@ const isValid = user && user.email && user.verified;
 const isValid = !!(user && user.email && user.verified);
 ```
 
-## Structured Logging (Adze)
+## Structured Logging (Pino)
 
-For projects using Adze, all logging uses namespaced loggers. See `project-documentation/logging-with-adze.md`.
+For projects using Pino, all logging uses structured loggers. See `project-documentation/logging-with-pino.md`.
 
 ```typescript
-import { createLogger } from '@mysite/shared/logger';
-const logger = createLogger('namespace');
-logger.log('message');
+import { logger } from '~/lib/logger';
+logger.info('message');
+logger.error({ err }, 'error message');
+logger.debug({ data }, 'debug context');
 ```
 
 **Collaborative Debugging**: Human runs dev server, AI monitors via `tail -f logs/server.log`.
@@ -102,7 +103,6 @@ Evaluate:
 **Core Commands**:
 - `npm run dev`: Start development server
 - `npm run check-types`: TypeScript validation
-- `npm run format`: Biome formatting
 
 ### Database Query Access (psql)
 
@@ -115,6 +115,5 @@ psql "$DATABASE_URL" -c "SELECT * FROM tablename;"
 
 ## Code Health
 
-- **Automated Formatting**: Use Biome (`npm run format`)
-- **Unused Code**: Rely on Biome linting to detect orphaned code
+- **Unused Code**: TypeScript TS6133/TS6192 detects unused declarations
 - **Manual Verification**: Check for indirect usage before deleting flagged code

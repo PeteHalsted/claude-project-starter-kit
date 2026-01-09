@@ -11,6 +11,24 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ---
 
+### January 9, 2026
+
+#### Git Hooks Cleanup
+- **Removed global hooks**: Deleted `~/.git-hooks/` concept - project hooks are authoritative
+- **Interactive hook install**: `sync-starter-kit.sh` now prompts to install/update hooks (not just report)
+- **Deleted pre-merge-commit**: Removed orphaned TODO bead detection (manual discovery preferred)
+
+#### Logging Migration (Adze → Pino)
+- **block-console-log.sh**: Updated to check for `pino` dependency instead of `adze`
+- **constitution.md**: Section IV now references Pino
+- **development-guidelines.md**: Updated logging examples to Pino syntax
+
+#### GitPro Token Enforcement
+- **Restored create-token.sh**: Component hook for token-based git-guard bypass
+- **Added documentation**: `project-documentation/token-based-hook-enforcement.md`
+
+---
+
 ### January 7, 2026
 
 #### Beads Upgrade (0.37.0 → 0.46.0)
