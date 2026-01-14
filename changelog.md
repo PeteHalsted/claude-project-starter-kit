@@ -11,6 +11,18 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ---
 
+### January 14, 2026
+
+### January 14, 2026
+
+#### GitPro Script Architecture
+- **Script-based operations**: Moved gitpro from inline validation to atomic bash scripts
+- **New scripts**: Added gitpro-checkpoint.sh, gitpro-commit.sh, gitpro-merge.sh
+- **Pre-gitpro hook**: Added validation hook that runs before gitpro skill
+- **Simplified pre-commit**: Project hook now blocks direct commits, forces GitPro usage
+
+---
+
 ### January 9, 2026
 
 #### Git Hooks Cleanup

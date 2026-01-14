@@ -20,6 +20,16 @@
       {
         "hooks": [
           {
+            "command": "~/.claude/hooks/pre-gitpro.sh",
+            "timeout": 120,
+            "type": "command"
+          }
+        ],
+        "matcher": "Skill"
+      },
+      {
+        "hooks": [
+          {
             "command": "~/.claude/hooks/block-db-commands.sh",
             "timeout": 5,
             "type": "command"

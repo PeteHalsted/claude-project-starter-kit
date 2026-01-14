@@ -22,6 +22,11 @@ fi
 # Cleanup old tokens (>1 hour)
 find /tmp -name ".gitpro-token-*" -mmin +60 -delete 2>/dev/null
 
+# SKIP_GIT_GUARD bypass for legitimate workflow operations
+if echo "$COMMAND" | grep -q "^SKIP_GIT_GUARD=1"; then
+  exit 0
+fi
+
 # Output functions
 deny() {
     printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"%s"}}' "$1"

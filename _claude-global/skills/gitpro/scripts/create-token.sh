@@ -1,7 +1,7 @@
 #!/bin/bash
 # Component hook: Create token for gitpro session
 # This runs as a PreToolUse hook when gitpro skill is active
-# See: project-documentation/token-based-hook-enforcement.md
+# Allows git-guard.sh to bypass blocking for gitpro operations
 
 INPUT=$(cat)
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id')
