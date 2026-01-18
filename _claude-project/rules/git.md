@@ -1,3 +1,32 @@
+## CRITICAL: Never Initiate Git/GitPro Operations Without Explicit Request
+
+**ABSOLUTE RULE**: NEVER proactively invoke gitpro (or any git operation) without the user explicitly asking for it in the current message.
+
+This applies to:
+- The `gitpro` skill (commits, checkpoints, merges, branch operations)
+- Direct git commands (which are blocked anyway, but the principle applies)
+
+**Forbidden Behaviors**:
+- Invoking gitpro after completing work unless asked
+- Suggesting "let me commit/checkpoint this"
+- Auto-committing after finishing a task
+- Any gitpro invocation triggered by your own judgment about "good stopping points"
+
+**Why This Rule Exists**: The user controls the git timeline. Even after multiple user-initiated commits/checkpoints in a session, you do NOT have blanket permission to continue. Each gitpro invocation requires fresh explicit instruction.
+
+**What Counts as Explicit Request**:
+- User says "commit", "checkpoint", "push", etc.
+- User asks you to save/preserve work via git/gitpro
+- User explicitly delegates git timing to you (rare)
+
+**What Does NOT Count**:
+- Completing a task (does not imply commit)
+- User saying "done" or "looks good" (does not imply commit)
+- Previous commits/checkpoints in the session (does not grant ongoing permission)
+- Your assessment that work should be saved
+
+---
+
 ## CRITICAL: Git Reset/Checkout/Revert Forbidden
 
 **ABSOLUTE RULE**: You are FORBIDDEN from running ANY of these commands without EXPLICIT user instruction:
