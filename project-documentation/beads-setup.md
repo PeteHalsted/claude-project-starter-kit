@@ -27,16 +27,16 @@ Run in each project repo (once per clone):
 ```bash
 cd /path/to/repo
 
-# Choose one initialization mode:
-bd init                # default
-# bd init --team         # team/branch workflow
-# bd init --contributor  # OSS fork workflow
+# Skip hooks - we use our own Claude Code integration (see Section 3)
+bd init --skip-hooks
 ```
 
 What this does:
 
 - Creates `.beads/` with the SQLite cache and JSONL issue store
-- Offers to install git hooks and configure the merge driver (say **yes**)
+- Skips beads' built-in Claude Code hooks (we use custom ones)
+
+**Important:** After init, you MUST configure the sync branch and db path. See Section 2.1.
 
 Run a health check at any time:
 
@@ -44,12 +44,58 @@ Run a health check at any time:
 bd doctor
 ```
 
-Commit the metadata:
+---
+
+### 2.1 Required Post-Init Configuration
+
+The `bd init` command does NOT properly set up sync-branch or db path. You must do this manually.
+
+#### Edit `.beads/config.yaml`
+
+Add these two settings (replace `/path/to/repo` with your actual path):
+
+```yaml
+# IMPORTANT: Hardcoded to lowercase path to prevent case mismatch on macOS
+db: "/path/to/repo/.beads/beads.db"
+
+# IMPORTANT: Use dedicated sync branch, NOT main (prevents worktree blocking)
+sync-branch: "beads-sync"
+```
+
+#### Set sync.branch in database
 
 ```bash
-git add .beads
+bd config set sync.branch beads-sync
+```
+
+#### Run initial sync
+
+```bash
+bd sync
+```
+
+#### Verify worktree is correct
+
+```bash
+git worktree list
+# Should show: .git/beads-worktrees/beads-sync  [beads-sync]
+# Should NOT show main in worktrees
+```
+
+#### Commit the setup
+
+```bash
+git add .beads .gitattributes AGENTS.md
 git commit -m "Initialize Beads issue tracker"
 ```
+
+### Why These Steps Matter
+
+1. **Hardcoded db path**: macOS has case-insensitive filesystem. Without explicit lowercase path, beads can create duplicate databases with different casing.
+
+2. **sync-branch in config.yaml**: The `bd config set` command only sets it in the SQLite database (which is gitignored). Setting it in config.yaml ensures all clones use the same sync branch.
+
+3. **beads-sync branch**: Using `main` as sync branch causes worktree to lock main, breaking `git checkout main` during merge workflows.
 
 ---
 
@@ -102,7 +148,9 @@ fatal: 'main' is already checked out at '/path/.git/beads-worktrees/main'
 
 ### Solution
 
-Use a dedicated sync branch (not main):
+Use a dedicated sync branch (not main). See Section 2.1 for full setup.
+
+**Quick fix for existing repos:**
 
 ```bash
 # Set in database (takes effect immediately)
