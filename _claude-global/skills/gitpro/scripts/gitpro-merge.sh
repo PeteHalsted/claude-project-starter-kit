@@ -3,6 +3,7 @@
 # Usage: gitpro-merge.sh --source-branch name --bump-type major|minor|patch --username name
 #
 # Handles: merge, version bump, commit, tag, push (once!), cleanup, new branch creation
+# Supports: Node.js (package.json) and Python (pyproject.toml)
 
 set -e
 
@@ -25,12 +26,68 @@ if [ -z "$SOURCE_BRANCH" ] || [ -z "$BUMP_TYPE" ] || [ -z "$USERNAME" ]; then
 fi
 
 WORKING_BRANCH="wt-${USERNAME}"
+SCRIPT_DIR="$(dirname "$0")"
+
+# Detect project type
+detect_project_type() {
+    if [ -f "package.json" ]; then
+        echo "node"
+    elif [ -f "pyproject.toml" ]; then
+        echo "python"
+    else
+        echo "unknown"
+    fi
+}
+
+# Bump version based on project type
+bump_version() {
+    local project_type="$1"
+    local bump_type="$2"
+
+    case "$project_type" in
+        node)
+            npm version "$bump_type" --no-git-tag-version
+            ;;
+        python)
+            python3 "$SCRIPT_DIR/gitpro-bump-python.py" "$bump_type"
+            ;;
+        *)
+            echo "Error: Unknown project type, cannot bump version" >&2
+            exit 1
+            ;;
+    esac
+}
+
+# Stage version files based on project type
+stage_version_files() {
+    local project_type="$1"
+
+    case "$project_type" in
+        node)
+            git add package.json
+            [ -f "package-lock.json" ] && git add package-lock.json
+            ;;
+        python)
+            git add pyproject.toml
+            # Also stage __init__.py if it was updated by bump script
+            git add "*/__init__.py" 2>/dev/null || true
+            ;;
+    esac
+}
+
+PROJECT_TYPE=$(detect_project_type)
 
 echo "=== GitPro Merge to Main ==="
 echo "Source: $SOURCE_BRANCH"
 echo "Bump: $BUMP_TYPE"
 echo "User: $USERNAME"
+echo "Project: $PROJECT_TYPE"
 echo ""
+
+if [ "$PROJECT_TYPE" = "unknown" ]; then
+    echo "Error: No package.json or pyproject.toml found" >&2
+    exit 1
+fi
 
 # Ensure source branch is pushed
 echo "Pushing source branch..."
@@ -47,11 +104,11 @@ git merge "$SOURCE_BRANCH" --no-edit
 
 # Version bump
 echo "Bumping version ($BUMP_TYPE)..."
-NEW_VERSION=$(npm version "$BUMP_TYPE" --no-git-tag-version)
+NEW_VERSION=$(bump_version "$PROJECT_TYPE" "$BUMP_TYPE")
 echo "New version: $NEW_VERSION"
 
-# Commit version bump
-git add package.json package-lock.json
+# Stage and commit version bump
+stage_version_files "$PROJECT_TYPE"
 git commit --no-verify -m "chore: bump version to $NEW_VERSION"
 
 # Tag
