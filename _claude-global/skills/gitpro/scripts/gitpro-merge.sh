@@ -20,8 +20,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [ -z "$SOURCE_BRANCH" ] || [ -z "$BUMP_TYPE" ] || [ -z "$USERNAME" ]; then
-    echo "Error: --source-branch, --bump-type, and --username are required" >&2
+if [ -z "$SOURCE_BRANCH" ] || [ -z "$USERNAME" ]; then
+    echo "Error: --source-branch and --username are required" >&2
     exit 1
 fi
 
@@ -84,11 +84,6 @@ echo "User: $USERNAME"
 echo "Project: $PROJECT_TYPE"
 echo ""
 
-if [ "$PROJECT_TYPE" = "unknown" ]; then
-    echo "Error: No package.json or pyproject.toml found" >&2
-    exit 1
-fi
-
 # Ensure source branch is pushed
 echo "Pushing source branch..."
 git push origin "$SOURCE_BRANCH" 2>/dev/null || true
@@ -102,21 +97,27 @@ git pull
 echo "Merging $SOURCE_BRANCH..."
 git merge "$SOURCE_BRANCH" --no-edit
 
-# Version bump
-echo "Bumping version ($BUMP_TYPE)..."
-NEW_VERSION=$(bump_version "$PROJECT_TYPE" "$BUMP_TYPE")
-echo "New version: $NEW_VERSION"
+# Version bump (skip if no project manifest)
+if [ "$PROJECT_TYPE" = "unknown" ] || [ -z "$BUMP_TYPE" ]; then
+    echo "No package.json or pyproject.toml — skipping version bump"
+    NEW_VERSION=""
+else
+    echo "Bumping version ($BUMP_TYPE)..."
+    NEW_VERSION=$(bump_version "$PROJECT_TYPE" "$BUMP_TYPE")
+    echo "New version: $NEW_VERSION"
 
-# Stage and commit version bump
-stage_version_files "$PROJECT_TYPE"
-git commit --no-verify -m "chore: bump version to $NEW_VERSION"
+    # Stage and commit version bump
+    stage_version_files "$PROJECT_TYPE"
+    git commit --no-verify -m "🔖 chore: bump version to $NEW_VERSION"
 
-# Tag
-git tag "$NEW_VERSION"
+    # Tag
+    git tag "$NEW_VERSION"
+fi
 
 # Push main and tags (single push operation)
 echo "Pushing main and tags..."
-git push && git push --tags
+git push
+[ -n "$NEW_VERSION" ] && git push --tags
 
 # Delete merged source branch
 echo "Cleaning up source branch..."
@@ -146,5 +147,5 @@ git push -u origin "$WORKING_BRANCH"
 
 echo ""
 echo "=== Merge Complete ==="
-echo "Version: $NEW_VERSION"
+[ -n "$NEW_VERSION" ] && echo "Version: $NEW_VERSION"
 echo "Branch: $WORKING_BRANCH"

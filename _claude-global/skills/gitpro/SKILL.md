@@ -159,15 +159,15 @@ Full merge workflow with version bump and cleanup.
 | Parameter | Required | Description |
 |-----------|----------|-------------|
 | `--source-branch` | Yes | Branch being merged to main |
-| `--bump-type` | Yes | major, minor, or patch |
+| `--bump-type` | No | major, minor, or patch (skip if no manifest) |
 | `--username` | Yes | For creating wt-{username} branch |
 
 **What Script Does:**
 - Push source branch
 - Checkout main, pull
 - Merge source branch
-- Bump version, commit, tag
-- Push main and tags (single push!)
+- Bump version, commit, tag (if package.json or pyproject.toml exists)
+- Push main and tags
 - Delete merged source branch
 - Create fresh wt-{username} branch
 
