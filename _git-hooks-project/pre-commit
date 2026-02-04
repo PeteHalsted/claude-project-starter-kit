@@ -2,7 +2,7 @@
 # Pre-commit hook: GitPro enforcement blocker
 #
 # All git commits should go through the GitPro skill which:
-# 1. Validates TypeScript (via Claude Code PreToolUse hook)
+# 1. Validates code quality (via Claude Code PreToolUse hook)
 # 2. Validates TODO tracking (via Claude Code PreToolUse hook)
 # 3. Handles beads sync (in scripts)
 # 4. Uses --no-verify to bypass this hook (since validation already passed)
@@ -30,7 +30,7 @@ echo "  • \"commit\"     - Full conventional commit with changelog"
 echo "  • \"merge\"      - Merge to main with version bump"
 echo ""
 echo "GitPro ensures:"
-echo "  ✓ TypeScript validation (zero tolerance)"
+echo "  ✓ Code quality validation"
 echo "  ✓ TODO tracking validation"
 echo "  ✓ Conventional commit format with emojis"
 echo "  ✓ Automatic changelog updates"

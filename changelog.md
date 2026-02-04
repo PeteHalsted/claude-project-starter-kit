@@ -11,6 +11,12 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ---
 
+### February 3, 2026
+
+- **✨ Python Support** - sync-starter-kit and gitpro now detect and support Python projects
+- **✨ Beads Integration** - Issue tracking with merge driver and starter kit template
+- **✨ CLAUDE.md Template** - Interactive creation from starter kit during sync
+
 ### January 14, 2026
 
 ### January 14, 2026

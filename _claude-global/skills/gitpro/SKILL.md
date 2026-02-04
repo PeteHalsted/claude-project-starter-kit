@@ -14,6 +14,8 @@ hooks:
 
 Git workflow automation using scripts for atomic, efficient operations.
 
+**Supports**: Node.js (package.json) and Python (pyproject.toml)
+
 ## Architecture
 
 ```
@@ -76,15 +78,23 @@ Fast timestamped commit without full analysis.
 Full conventional commit with changelog and optional branch rename.
 
 **AI Steps:**
-1. Run `git status` to see what's changed
-2. Run `git diff --staged --name-only` (or `git diff --name-only` if nothing staged)
-3. Analyze changes to determine:
-   - **Commit type**: feat, fix, refactor, docs, chore, etc.
-   - **Commit message**: `<emoji> <type>: <description>`
-   - **Branch rename**: If current branch is `wt-*`, determine descriptive name
-   - **Changelog entry**: If `changelog.md` exists, write entry text
-4. Load `~/.claude/skills/gitpro/references/commit-types.md` for emoji/type reference
-5. Call script with parameters
+1. Run `git status` to see all changed/untracked files
+2. Run `git diff --stat` to see actual changes per file (insertions/deletions)
+3. **Categorize changes by feature/purpose:**
+   - Group related files (e.g., all files for "image processing" vs "AI descriptions")
+   - Identify distinct features/fixes being committed
+   - Note: Changes may span multiple sessions - analyze ALL diffs, not just session memory
+4. Load reference files:
+   - `~/.claude/skills/gitpro/references/commit-types.md` - emoji/type mapping
+   - `~/.claude/skills/gitpro/references/changelog-rules.md` - what goes in changelog
+5. **Build commit message:**
+   - If single feature: `<emoji> <type>: <description>`
+   - If multiple features: Multi-line with primary type, then bullet list
+6. **Build changelog entry:**
+   - List ALL user-facing features/fixes (see changelog-rules.md)
+   - Exclude refactors, tests, docs, style changes
+7. Determine branch rename if current is `wt-*`
+8. Call script with parameters
 
 **Script Call:**
 ```bash
@@ -111,6 +121,12 @@ Full conventional commit with changelog and optional branch rename.
 - Commit with --no-verify
 - Beads sync (post-commit)
 - Push to remote (non-main branches)
+
+**CRITICAL: Analyze ALL Changes**
+- Do NOT rely on what you remember working on in this session
+- Uncommitted changes may include work from previous sessions
+- Always use `git diff --stat` to see the actual scope of changes
+- If you see changes you don't recognize, they still need to be in the commit message/changelog
 
 ---
 
@@ -197,7 +213,8 @@ Create new working branch.
 ## Validation
 
 Validation happens in Claude Code `PreToolUse` hook BEFORE this skill runs:
-- TypeScript errors → blocks gitpro (except checkpoint)
+- TypeScript errors (Node) → blocks gitpro (except checkpoint)
+- Python lint/type errors (Python) → blocks gitpro (except checkpoint)
 - Invalid TODOs → blocks gitpro (except checkpoint)
 - Toast usage → warning only
 
@@ -211,6 +228,15 @@ All scripts in: `~/.claude/skills/gitpro/scripts/`
 |--------|---------|
 | `gitpro-checkpoint.sh` | Quick timestamped commit |
 | `gitpro-commit.sh` | Full commit with changelog |
-| `gitpro-merge.sh` | Merge to main workflow |
+| `gitpro-merge.sh` | Merge to main workflow (Node + Python) |
+| `gitpro-bump-python.py` | Python version bump helper |
 | `create-token.sh` | Token for git-guard bypass |
 | `get_timestamp.sh` | Local timezone timestamp |
+
+## Project Type Detection
+
+Merge script auto-detects project type:
+- **Node.js**: `package.json` exists → uses `npm version`
+- **Python**: `pyproject.toml` exists → uses `gitpro-bump-python.py`
+
+Version format follows semver: `vX.Y.Z`

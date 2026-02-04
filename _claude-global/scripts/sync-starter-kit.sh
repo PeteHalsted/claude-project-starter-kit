@@ -58,7 +58,7 @@ get_kit_path() {
 
 # Check if we're in a project directory
 check_project() {
-    if [[ ! -f "package.json" && ! -d ".git" && ! -f "CLAUDE.md" ]]; then
+    if [[ ! -f "package.json" && ! -f "pyproject.toml" && ! -d ".git" && ! -d ".claude" ]]; then
         error "Not in a project directory. Run from a project root."
     fi
 }
@@ -490,13 +490,43 @@ compare_hooks() {
 
 # Audit CLAUDE.md
 audit_claude_md() {
+    local kit_path="$1"
+    local kit_claude="$kit_path/_claude-project/CLAUDE.md"
+
     header "=== CLAUDE.MD AUDIT ==="
     echo ""
 
     if [[ ! -f "CLAUDE.md" ]]; then
-        warn "CLAUDE.md missing (optional - .claude/rules/ auto-discovers)"
+        warn "MISSING: CLAUDE.md"
         echo ""
-        return 0  # Not an error - rules directory handles discovery
+        echo "  Options:"
+        echo "    [c] Create from starter kit template"
+        echo "    [s] Skip"
+        echo -n "  Choice [c/s]: "
+        read -r choice
+        case "$choice" in
+            c|C)
+                if [[ -f "$kit_claude" ]]; then
+                    cp "$kit_claude" "CLAUDE.md"
+                    success "  Created: CLAUDE.md"
+                else
+                    # Fallback if kit template missing
+                    cat > "CLAUDE.md" << 'EOF'
+# CLAUDE.md
+
+This file provides guidance to Claude Code when working with code in this repository.
+
+Rules are auto-discovered from `.claude/rules/` - no imports needed.
+EOF
+                    success "  Created: CLAUDE.md (default template)"
+                fi
+                ;;
+            *)
+                echo "  Skipped"
+                ;;
+        esac
+        echo ""
+        return 1
     fi
 
     # Check for legacy AGENTS.md import (deprecated)
@@ -513,7 +543,7 @@ audit_claude_md() {
         return 1
     fi
 
-    success "CLAUDE.md OK (no legacy imports)"
+    success "CLAUDE.md OK"
     echo ""
     return 0
 }
@@ -562,7 +592,7 @@ main() {
     compare_rules "$kit_path" || total_changes=1
     check_mcp_rules "$kit_path" || total_changes=1
     compare_hooks "$kit_path" || total_changes=1
-    audit_claude_md || total_changes=1
+    audit_claude_md "$kit_path" || total_changes=1
     check_legacy_agents || true  # Warn but don't block
 
     echo "=========================================="
