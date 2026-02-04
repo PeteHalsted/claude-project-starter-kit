@@ -1,6 +1,7 @@
 #!/bin/bash
 # Pre-GitPro Validation Hook
-# Runs before gitpro skill to validate TypeScript, TODOs, and toast usage
+# Runs before gitpro skill to validate type errors, TODOs, and toast usage
+# Supports Node (TypeScript) and Python (pyright/mypy) projects
 # Returns deny if validation fails, allowing gitpro to use --no-verify safely
 
 INPUT=$(cat)
@@ -33,19 +34,39 @@ deny() {
     exit 0
 }
 
-# Check if we're in a git repository with package.json
-if [ ! -f "package.json" ]; then
-    exit 0  # Not a Node project, skip validation
+# Detect project type
+PROJECT_TYPE="unknown"
+if [ -f "package.json" ]; then
+    PROJECT_TYPE="node"
+elif [ -f "pyproject.toml" ]; then
+    PROJECT_TYPE="python"
+fi
+
+if [ "$PROJECT_TYPE" = "unknown" ]; then
+    exit 0  # No recognized project, skip validation
 fi
 
 # ============================================
-# VALIDATION 1: TypeScript Check
+# VALIDATION 1: Type Checking
 # ============================================
-if grep -q '"check-types"' package.json 2>/dev/null; then
-    echo "Pre-gitpro: Running TypeScript validation..." >&2
-
-    if ! npm run check-types >/dev/null 2>&1; then
-        deny "GITPRO BLOCKED - TypeScript Errors\\n\\nFix TypeScript errors before committing.\\nRun: npm run check-types"
+if [ "$PROJECT_TYPE" = "node" ]; then
+    if grep -q '"check-types"' package.json 2>/dev/null; then
+        echo "Pre-gitpro: Running TypeScript validation..." >&2
+        if ! npm run check-types >/dev/null 2>&1; then
+            deny "GITPRO BLOCKED - TypeScript Errors\\n\\nFix TypeScript errors before committing.\\nRun: npm run check-types"
+        fi
+    fi
+elif [ "$PROJECT_TYPE" = "python" ]; then
+    if command -v pyright >/dev/null 2>&1; then
+        echo "Pre-gitpro: Running Python type checking (pyright)..." >&2
+        if ! pyright >/dev/null 2>&1; then
+            deny "GITPRO BLOCKED - Python Type Errors\\n\\nFix type errors before committing.\\nRun: pyright"
+        fi
+    elif command -v mypy >/dev/null 2>&1; then
+        echo "Pre-gitpro: Running Python type checking (mypy)..." >&2
+        if ! mypy . >/dev/null 2>&1; then
+            deny "GITPRO BLOCKED - Python Type Errors\\n\\nFix type errors before committing.\\nRun: mypy ."
+        fi
     fi
 fi
 
@@ -55,9 +76,15 @@ fi
 if [ -d ".beads" ] && command -v bd >/dev/null 2>&1 && command -v rg >/dev/null 2>&1; then
     echo "Pre-gitpro: Validating TODO tracking..." >&2
 
+    # Set file type flags based on project
+    if [ "$PROJECT_TYPE" = "node" ]; then
+        RG_TYPES="--type ts --type js --glob !**/node_modules/**"
+    elif [ "$PROJECT_TYPE" = "python" ]; then
+        RG_TYPES="--type py --glob !**/.venv/** --glob !**/venv/**"
+    fi
+
     INVALID_TODOS=$(rg "TODO\(|FIXME\(|HACK\(|XXX\(" \
-        --type ts --type js \
-        --glob '!**/node_modules/**' \
+        $RG_TYPES \
         --line-number \
         --no-heading \
         --color never \
@@ -84,9 +111,9 @@ if [ -d ".beads" ] && command -v bd >/dev/null 2>&1 && command -v rg >/dev/null 
 fi
 
 # ============================================
-# VALIDATION 3: Toast Check (if lint:toast exists)
+# VALIDATION 3: Toast Check (Node only, if lint:toast exists)
 # ============================================
-if grep -q '"lint:toast"' package.json 2>/dev/null; then
+if [ "$PROJECT_TYPE" = "node" ] && grep -q '"lint:toast"' package.json 2>/dev/null; then
     echo "Pre-gitpro: Checking for toast usage..." >&2
 
     TOAST_OUTPUT=$(npm run lint:toast 2>&1)

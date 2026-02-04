@@ -293,6 +293,14 @@ compare_rules() {
         has_changes=1
     fi
 
+    # Detect target project type for language-specific rule filtering
+    local target_type="unknown"
+    if [[ -f "package.json" ]]; then
+        target_type="node"
+    elif [[ -f "pyproject.toml" ]]; then
+        target_type="python"
+    fi
+
     # Compare each kit file (recursively)
     while IFS= read -r -d '' kit_file; do
         [[ -f "$kit_file" ]] || continue
@@ -304,6 +312,22 @@ compare_rules() {
         if [[ "$rel_path" == "projectrules.md" ]]; then
             echo "SKIP: $rel_path (project-specific)"
             continue
+        fi
+
+        # Language-specific rule filtering:
+        # - *-py.md files: only used for Python projects, always skip for others
+        # - Base files (e.g. constitution.md): skip for Python IF a -py variant exists in kit
+        local base_name
+        base_name=$(basename "$rel_path")
+        if [[ "$base_name" == *-py.md ]]; then
+            if [[ "$target_type" != "python" ]]; then
+                continue
+            fi
+        elif [[ "$target_type" == "python" ]]; then
+            local py_variant="${kit_file%.md}-py.md"
+            if [[ -f "$py_variant" ]]; then
+                continue
+            fi
         fi
 
         local project_file="$project_rules/$rel_path"

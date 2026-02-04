@@ -12,6 +12,8 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 ---
 
 ### February 3, 2026
+- **✨ Python Pre-Commit Validation** - pre-gitpro hook now runs pyright/mypy type checking for Python projects
+- **✨ Language-Aware Rule Sync** - sync-starter-kit detects project type and uses -py.md rule variants for Python projects
 
 - **✨ Python Support** - sync-starter-kit and gitpro now detect and support Python projects
 - **✨ Beads Integration** - Issue tracking with merge driver and starter kit template
