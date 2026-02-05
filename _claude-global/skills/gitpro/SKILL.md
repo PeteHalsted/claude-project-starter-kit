@@ -1,6 +1,6 @@
 ---
 name: gitpro
-description: ALWAYS use this skill for ALL git operations. NEVER run git commit, git add, git push, git merge, git checkout -b, or git branch -m directly. This skill automates git workflows with conventional commits, automatic changelog updates, semantic version bumping, and consistent formatting. Use when user requests checkpoint, commit, rename branch, merge, or create new branch operations.
+description: ALWAYS use this skill for ALL git operations. NEVER run git commit, git add, git push, git merge, git checkout -b, or git branch -m directly. This skill automates git workflows with conventional commits, automatic changelog updates, semantic version bumping, and consistent formatting. Use when user requests checkpoint, commit, rename branch, merge, sync, pull, refresh, or create new branch operations.
 hooks:
   PreToolUse:
     - matcher: Bash
@@ -47,6 +47,7 @@ Git workflow automation using scripts for atomic, efficient operations.
 | "checkpoint" | Quick timestamped commit | `gitpro-checkpoint.sh` |
 | "commit" | Full conventional commit | `gitpro-commit.sh` |
 | "merge to main" | Merge + version bump + cleanup | `gitpro-merge.sh` |
+| "sync" / "pull" / "get updates" | Safe fast-forward from remote | `gitpro-sync.sh` |
 | "merge from X" | Pull changes from branch | Manual (simple) |
 | "rename branch" | Rename current branch | Via commit script |
 | "new branch" | Create working branch | Manual (simple) |
@@ -173,6 +174,43 @@ Full merge workflow with version bump and cleanup.
 
 ---
 
+### Sync
+
+Safe fast-forward from remote. Use when another machine pushed changes and local needs to catch up.
+
+**AI Steps:**
+1. Call script (optionally with --branch if not main)
+
+**Script Call:**
+```bash
+~/.claude/skills/gitpro/scripts/gitpro-sync.sh [--branch name]
+```
+
+**Parameters:**
+| Parameter | Required | Default | Description |
+|-----------|----------|---------|-------------|
+| `--branch` | No | main | Branch to sync from remote |
+
+**What Script Does:**
+- Checks for uncommitted changes → aborts if dirty
+- Warns about untracked files (informational only)
+- Switches to target branch if not current
+- Fetches from origin
+- Checks for unpushed local commits → aborts if diverged
+- Shows incoming commits
+- Fast-forwards with `--ff-only` (refuses if not a clean fast-forward)
+- Switches back to original branch if it changed
+
+**Safety Guarantees:**
+- Will NOT overwrite uncommitted changes
+- Will NOT overwrite unpushed local commits
+- Will NOT create merge commits (ff-only)
+- Will NOT modify any branch other than the target
+
+**Trigger Words:** "sync", "pull", "refresh", "get updates", "get updates from repo"
+
+---
+
 ### Merge from Branch
 
 Pull changes from another branch into current.
@@ -229,6 +267,7 @@ All scripts in: `~/.claude/skills/gitpro/scripts/`
 | `gitpro-checkpoint.sh` | Quick timestamped commit |
 | `gitpro-commit.sh` | Full commit with changelog |
 | `gitpro-merge.sh` | Merge to main workflow (Node + Python) |
+| `gitpro-sync.sh` | Safe fast-forward from remote |
 | `gitpro-bump-python.py` | Python version bump helper |
 | `create-token.sh` | Token for git-guard bypass |
 | `get_timestamp.sh` | Local timezone timestamp |
