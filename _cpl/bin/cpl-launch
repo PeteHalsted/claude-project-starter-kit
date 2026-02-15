@@ -19,4 +19,4 @@ if [ "$mode" = "both" ]; then
   (zed . >/dev/null 2>&1 &)
 fi
 
-"$HOME/.local/bin/claude"
+claude

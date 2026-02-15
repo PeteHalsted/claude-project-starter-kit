@@ -24,9 +24,32 @@ on run
 		set projPath to homePath & "projects/" & projectName
 	end if
 
-	-- Zed only: just open Zed and done
+	-- Layout config — read from ~/.cpl.conf or use defaults
+	-- Monitor geometry (UI-scaled coordinates)
+	set monX to 0
+	set monW to 3840
+	set monH to 1080
+	-- Editor gets left portion of monitor
+	set editorShare to 0.5
+	set maxSlots to 3
+	-- Zed app name (for open -a) and process name (for System Events)
+	set zedAppName to "Zed Preview"
+	set zedProcessName to "zed"
+	set editorW to round (monW * editorShare) rounding down
+
+	-- Zed only: open and position, then done
 	if launchMode is "zed" then
-		do shell script "open -a 'Zed Preview' " & quoted form of projPath
+		do shell script "open -a " & quoted form of zedAppName & " " & quoted form of projPath
+		delay 1
+		try
+			tell application "System Events"
+				tell process zedProcessName
+					set frontmost to true
+					set position of window 1 to {monX, 0}
+					set size of window 1 to {editorW, monH}
+				end tell
+			end tell
+		end try
 		return
 	end if
 
@@ -39,17 +62,15 @@ on run
 
 	if slotNum is 0 then
 		set statusInfo to do shell script homePath & "bin/cpl-slot status"
-		display dialog "All 3 slots in use:" & return & return & statusInfo buttons {"OK"} default button "OK"
+		display dialog "All slots in use:" & return & return & statusInfo buttons {"OK"} default button "OK"
 		return
 	end if
 
-	-- Right monitor: 3 equal-width slots, filling right to left
-	set monX to 3440
-	set monW to 3440
-	set sw to monW div 3
+	-- Claude slots: equal thirds of full monitor, right to left
+	set sw to monW div maxSlots
 	set r to monX + monW - ((slotNum - 1) * sw)
 	set l to r - sw
-	if slotNum is 3 then set l to monX
+	if slotNum is maxSlots then set l to monX
 
 	-- Build command based on mode
 	if launchMode is "terminal" then
@@ -91,13 +112,29 @@ on run
 		end try
 	end if
 
+	-- Open and position Zed before creating iTerm window
+	-- (cpl-launch will also call zed, which harmlessly focuses the existing window)
+	if launchMode is "both" then
+		do shell script "open -a " & quoted form of zedAppName & " " & quoted form of projPath
+		delay 1
+		try
+			tell application "System Events"
+				tell process zedProcessName
+					set frontmost to true
+					set position of window 1 to {monX, 0}
+					set size of window 1 to {editorW, monH}
+				end tell
+			end tell
+		end try
+	end if
+
 	-- Create CPL window (with retry for transient -609 on cold launch)
 	repeat 5 times
 		try
 			tell application "iTerm"
 				activate
 				set newWindow to (create window with profile profileName)
-				set bounds of newWindow to {l, 0, r, 1440}
+				set bounds of newWindow to {l, 0, r, monH}
 				tell current session of newWindow
 					set name to projectName
 					write text cmd

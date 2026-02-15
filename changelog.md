@@ -12,6 +12,11 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 ---
 
 ### February 15, 2026
+- **✨ Configurable Layout** - Monitor geometry and slot count now configurable in cpl-app.applescript
+- **✨ Single-Monitor Support** - Zed positioning with editorShare split; works alongside Claude slots
+- **✨ Zed Window Positioning** - Explicit Zed placement via System Events in both and zed modes
+- **🐛 PATH-based Claude Resolution** - Use `claude` via PATH instead of hardcoded `~/.local/bin/claude`
+- **📚 CPL Docs** - Comprehensive permissions guide, layout config reference, troubleshooting table
 
 - **✨ CPL Version-Tracked Sync** - CPL source moved into repo with `sync-cpl.sh` for all-or-nothing install/update with version tracking
 - **✨ CPL Picker Improvements** - Floating window for reliable Spotlight focus, dynamic terminal-only directory options (~, ~/projects), persistent last-used selection
