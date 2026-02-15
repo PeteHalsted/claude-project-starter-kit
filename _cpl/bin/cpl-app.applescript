@@ -24,18 +24,32 @@ on run
 		set projPath to homePath & "projects/" & projectName
 	end if
 
-	-- Layout config — read from ~/.cpl.conf or use defaults
-	-- Monitor geometry (UI-scaled coordinates)
-	set monX to 0
-	set monW to 3840
-	set monH to 1080
-	-- Editor gets left portion of monitor
-	set editorShare to 0.5
-	set maxSlots to 3
-	-- Zed app name (for open -a) and process name (for System Events)
-	set zedAppName to "Zed Preview"
-	set zedProcessName to "zed"
-	set editorW to round (monW * editorShare) rounding down
+	-- Layout config — read from ~/.cpl.conf (required)
+	set confPath to homePath & ".cpl.conf"
+	try
+		do shell script "test -f " & quoted form of confPath
+	on error
+		display dialog "CPL config not found: ~/.cpl.conf" & return & return & "Run sync-cpl to generate it, then edit for your monitor." buttons {"OK"} default button "OK" with icon stop
+		return
+	end try
+
+	-- Parse config (grep file directly — key=value, no spaces around =)
+	set monX to my readConf(confPath, "monX")
+	set monW to my readConf(confPath, "monW")
+	set monH to my readConf(confPath, "monH")
+	set editorX to my readConf(confPath, "editorX")
+	set editorW to my readConf(confPath, "editorW")
+	set maxSlots to my readConf(confPath, "maxSlots")
+	set zedAppName to my readConf(confPath, "zedAppName")
+	set zedProcessName to my readConf(confPath, "zedProcessName")
+
+	-- Coerce types
+	set monX to monX as integer
+	set monW to monW as integer
+	set monH to monH as integer
+	set editorX to editorX as integer
+	set editorW to editorW as integer
+	set maxSlots to maxSlots as integer
 
 	-- Zed only: open and position, then done
 	if launchMode is "zed" then
@@ -45,7 +59,7 @@ on run
 			tell application "System Events"
 				tell process zedProcessName
 					set frontmost to true
-					set position of window 1 to {monX, 0}
+					set position of window 1 to {editorX, 0}
 					set size of window 1 to {editorW, monH}
 				end tell
 			end tell
@@ -121,7 +135,7 @@ on run
 			tell application "System Events"
 				tell process zedProcessName
 					set frontmost to true
-					set position of window 1 to {monX, 0}
+					set position of window 1 to {editorX, 0}
 					set size of window 1 to {editorW, monH}
 				end tell
 			end tell
@@ -151,3 +165,17 @@ on run
 		end try
 	end repeat
 end run
+
+-- Read a config key from file (error if missing)
+on readConf(confPath, keyName)
+	try
+		set val to do shell script "grep '^" & keyName & "=' " & quoted form of confPath & " | head -1 | cut -d= -f2-"
+	on error
+		set val to ""
+	end try
+	if val is "" then
+		display dialog "Missing required key '" & keyName & "' in " & confPath buttons {"OK"} default button "OK" with icon stop
+		error "Missing config key: " & keyName
+	end if
+	return val
+end readConf

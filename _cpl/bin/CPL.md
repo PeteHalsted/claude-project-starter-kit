@@ -61,15 +61,62 @@ Picker offers 4 radio buttons:
 
 ### Layout Config
 
-All layout values are configured at the top of `cpl-app.applescript`. These should eventually be read from `~/.cpl.conf`:
+Layout is configured in `~/.cpl.conf` (required, per-machine). Generated on first `sync-cpl` with auto-detected display values. Edit for your setup.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `monX` | `0` | Monitor X offset (UI-scaled coordinates) |
-| `monW` | `3840` | Monitor width |
-| `monH` | `1080` | Monitor height |
-| `editorShare` | `0.5` | Fraction of monitor width for editor (Zed) |
-| `maxSlots` | `3` | Number of Claude iTerm2 slots |
+| Key | Description |
+|-----|-------------|
+| `monX` | X offset where the Claude slots monitor starts |
+| `monW` | Width of the Claude slots monitor |
+| `monH` | Height of the Claude slots monitor |
+| `editorX` | X offset where the Zed window starts |
+| `editorW` | Width of the Zed window |
+| `maxSlots` | Number of Claude iTerm2 slots (split equally across monW) |
+| `zedAppName` | Zed app name as in /Applications (e.g., "Zed Preview") |
+| `zedProcessName` | Zed process name as in Activity Monitor (e.g., "zed") |
+
+All keys are required. CPL will show an error dialog identifying the missing key.
+
+### Example Layouts
+
+**Dual monitor — Zed on left, Claude on right (3440x1440 each):**
+
+```
+~/.cpl.conf:
+  monX=3440  monW=3440  monH=1440  editorX=0  editorW=3440  maxSlots=3
+
+┌─────── Left Monitor (3440x1440) ───────┬─────── Right Monitor (3440x1440) ──────┐
+│                                         │                                         │
+│  ┌───────────────────────────────────┐  │  ┌───────────┬───────────┬───────────┐  │
+│  │              Zed                  │  │  │  Slot 3   │  Slot 2   │  Slot 1   │  │
+│  │          full monitor             │  │  │  ~1147px  │  ~1147px  │  ~1147px  │  │
+│  │         editorX=0                 │  │  │           │           │           │  │
+│  │        editorW=3440               │  │  │           │           │           │  │
+│  └───────────────────────────────────┘  │  └───────────┴───────────┴───────────┘  │
+│                                         │                                         │
+└─────────────────────────────────────────┴─────────────────────────────────────────┘
+```
+
+**Single ultrawide — Zed left half, Claude overlapping (3840x1080):**
+
+```
+~/.cpl.conf:
+  monX=0  monW=3840  monH=1080  editorX=0  editorW=1920  maxSlots=3
+
+┌──────────────────── Single Monitor (3840x1080) ────────────────────┐
+│                                                                     │
+│  ┌───────────────────┐                                              │
+│  │       Zed         │  (behind Claude slots — Cmd+Tab to switch)   │
+│  │   editorX=0       │                                              │
+│  │  editorW=1920     │                                              │
+│  └───────────────────┘                                              │
+│  ┌────────────┬────────────┬────────────┐                           │
+│  │   Slot 3   │   Slot 2   │   Slot 1   │                          │
+│  │   1280px   │   1280px   │   1280px   │                          │
+│  │            │            │            │                           │
+│  └────────────┴────────────┴────────────┘                           │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
 ### Claude Slots
 
@@ -79,7 +126,7 @@ All layout values are configured at the top of `cpl-app.applescript`. These shou
 
 ### Zed Positioning
 
-In `both` and `zed` modes, Zed is explicitly positioned to the left portion of the monitor (`monX` to `monX + editorW`) via System Events. This is necessary for single-monitor setups where Zed and Claude share the same display. Zed sits behind the Claude slots — switch to it via Cmd+Tab or clicking.
+In `both` and `zed` modes, Zed is positioned at `editorX` with width `editorW` via System Events. On single-monitor setups Zed sits behind the Claude slots — switch via Cmd+Tab. On dual-monitor setups, set `editorX` to the other monitor's offset for a non-overlapping layout.
 
 **Accessibility permission required:** System Events window positioning requires the calling app (CPL.app or Script Editor) to have Accessibility access in System Settings > Privacy & Security > Accessibility.
 
@@ -144,9 +191,10 @@ osascript -e 'tell application "System Events" to get name of every window of pr
 
 After running `sync-cpl.sh` on a new machine:
 
-1. Grant Accessibility to iTerm, `cpl-close-zed`, and CPL.app/Script Editor
-2. Run CPL once in "Claude + Zed" mode — approve all Automation prompts
-3. Verify with `~/bin/cpl-close-zed "testproject"`
+1. **Edit `~/.cpl.conf`** for your monitor resolution and layout preferences
+2. Grant Accessibility to iTerm, `cpl-close-zed`, and CPL.app/Script Editor
+3. Run CPL once in "Claude + Zed" mode — approve all Automation prompts
+4. Verify with `~/bin/cpl-close-zed "testproject"`
 
 ## Key Design Decisions
 

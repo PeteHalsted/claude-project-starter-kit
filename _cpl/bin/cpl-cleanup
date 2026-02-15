@@ -6,5 +6,11 @@ close_zed="${3:-}"
 "$HOME/bin/cpl-slot" release "$slot"
 
 if [ "$close_zed" = "close-zed" ] && [ -n "$project" ]; then
-  "$HOME/bin/cpl-close-zed" "$project" 2>/dev/null || true
+  # Read zedAppName from config (default to "Zed Preview" only if config missing)
+  zed_app="Zed Preview"
+  if [ -f "$HOME/.cpl.conf" ]; then
+    val=$(grep '^zedAppName=' "$HOME/.cpl.conf" | head -1 | cut -d= -f2-)
+    [ -n "$val" ] && zed_app="$val"
+  fi
+  "$HOME/bin/cpl-close-zed" "$project" "$zed_app" 2>/dev/null || true
 fi

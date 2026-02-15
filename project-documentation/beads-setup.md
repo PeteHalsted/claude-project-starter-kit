@@ -33,8 +33,12 @@ bd init --skip-hooks
 
 What this does:
 
-- Creates `.beads/` with the SQLite cache and JSONL issue store
+- Creates `.beads/` with the JSONL issue store and local database cache
 - Skips beads' built-in Claude Code hooks (we use custom ones)
+
+> **Note (v0.50+):** Beads now defaults to Dolt as the storage backend and will show
+> migration nudge messages. We continue using JSONL as source of truth with SQLite cache.
+> Add `--no-db` flag to any command to run in JSONL-only mode if needed.
 
 **Important:** After init, you MUST configure the sync branch and db path. See Section 2.1.
 
@@ -248,7 +252,11 @@ For command reference: `bd --help` or `bd <command> --help`
 
 ### Understanding the Data Model
 
-**JSONL is the source of truth**, not SQLite. The `.beads/issues.jsonl` file is git-tracked and serves as the authoritative data store. SQLite is a derived cache that gets rebuilt automatically.
+**JSONL is the source of truth**, not the local database. The `.beads/issues.jsonl` file is git-tracked and serves as the authoritative data store. The local database (SQLite or Dolt) is a derived cache that gets rebuilt automatically.
+
+> **v0.50+ note:** Beads now defaults to Dolt and will nudge you to migrate. Our workflow
+> doesn't require Dolt — the JSONL + SQLite approach still works. Ignore the nudge or
+> suppress it with `--no-db` if it becomes noisy.
 
 ### Standard Upgrade
 

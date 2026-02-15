@@ -12,6 +12,8 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 ---
 
 ### February 15, 2026
+- **✨ CPL Per-Machine Config** - Layout now configured in ~/.cpl.conf with auto-detected display resolution and Zed app. Supports dual-monitor setups with independent editor/Claude placement
+- **📚 Beads Docs Update** - SKILL.md updated for v0.50.3: bd todo, bd rename, bd find-duplicates, bd children, bd q, bd reopen, bd defer/undefer, bd stale, bd count, bd lint, bd query, bd orphans, bd promote, and decision issue type
 - **✨ Configurable Layout** - Monitor geometry and slot count now configurable in cpl-app.applescript
 - **✨ Single-Monitor Support** - Zed positioning with editorShare split; works alongside Claude slots
 - **✨ Zed Window Positioning** - Explicit Zed placement via System Events in both and zed modes

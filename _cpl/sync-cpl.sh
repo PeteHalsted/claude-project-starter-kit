@@ -117,7 +117,86 @@ echo ""
 cp "$CPL_DIR/iterm2/CPL.json" "$DEST_ITERM/CPL.json"
 echo "  Installed CPL.json → ~/Library/Application Support/iTerm2/DynamicProfiles/CPL.json"
 
-# 6. Write installed version
+# 6. Generate ~/.cpl.conf if it doesn't exist
+CONF_FILE="$HOME/.cpl.conf"
+if [[ ! -f "$CONF_FILE" ]]; then
+  echo ""
+  info "Detecting display and Zed installation..."
+
+  # Detect primary display resolution from "UI Looks like" line
+  DETECTED_W=""
+  DETECTED_H=""
+  UI_LINE=$(system_profiler SPDisplaysDataType 2>/dev/null | grep "UI Looks like:" | head -1)
+  if [[ -n "$UI_LINE" ]]; then
+    # Extract "3440 x 1440" from "UI Looks like: 3440 x 1440 @ 165.00Hz"
+    DETECTED_W=$(echo "$UI_LINE" | sed 's/.*: *\([0-9]*\) x .*/\1/')
+    DETECTED_H=$(echo "$UI_LINE" | sed 's/.* x \([0-9]*\).*/\1/')
+  fi
+
+  # Fallback: try Resolution line if UI Looks like not found
+  if [[ -z "$DETECTED_W" || -z "$DETECTED_H" ]]; then
+    RES_LINE=$(system_profiler SPDisplaysDataType 2>/dev/null | grep "Resolution:" | head -1)
+    if [[ -n "$RES_LINE" ]]; then
+      DETECTED_W=$(echo "$RES_LINE" | sed 's/.*: *\([0-9]*\) x .*/\1/')
+      DETECTED_H=$(echo "$RES_LINE" | sed 's/.* x \([0-9]*\).*/\1/')
+    fi
+  fi
+
+  MON_W="${DETECTED_W:-3840}"
+  MON_H="${DETECTED_H:-1080}"
+
+  # Detect Zed app name
+  ZED_APP=""
+  for candidate in "Zed Preview" "Zed" "Zed Dev" "Zed Nightly"; do
+    if [[ -d "/Applications/${candidate}.app" ]] || [[ -d "$HOME/Applications/${candidate}.app" ]]; then
+      ZED_APP="$candidate"
+      break
+    fi
+  done
+  ZED_APP="${ZED_APP:-Zed Preview}"
+
+  echo "  Display: ${MON_W} x ${MON_H}"
+  echo "  Zed app: ${ZED_APP}"
+
+  info "Generating ~/.cpl.conf..."
+  cat > "$CONF_FILE" << CONF
+# CPL Layout Config
+# All values required. CPL will error on missing keys.
+# Edit and re-launch CPL to apply changes (no reinstall needed).
+
+# Claude slots monitor (UI-scaled coordinates, not physical pixels)
+# Detected from: system_profiler SPDisplaysDataType
+# For multi-monitor: set monX to the X offset where the Claude monitor starts
+monX=0
+monW=${MON_W}
+monH=${MON_H}
+
+# Editor (Zed) position and size
+# editorX = X offset where Zed window starts
+# editorW = width of Zed window
+# Same monitor as Claude: editorX=0, editorW=half of monW
+# Separate monitor: editorX=<that monitor's X offset>, editorW=<that monitor's width>
+editorX=0
+editorW=$((MON_W / 2))
+
+# Max concurrent Claude iTerm2 slots
+maxSlots=3
+
+# Zed application name (as shown in /Applications or ~/Applications)
+# Detected from: /Applications/${ZED_APP}.app
+zedAppName=${ZED_APP}
+
+# Zed process name (as shown in Activity Monitor)
+zedProcessName=zed
+CONF
+  success "  Created ~/.cpl.conf with detected values"
+  echo "  Verify and edit if needed: open ~/.cpl.conf"
+else
+  echo ""
+  echo "  ~/.cpl.conf already exists (keeping current config)"
+fi
+
+# 7. Write installed version
 echo "$REPO_VERSION" > "$INSTALLED_VERSION_FILE"
 
 echo ""

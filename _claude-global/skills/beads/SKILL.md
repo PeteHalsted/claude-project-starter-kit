@@ -69,16 +69,39 @@ bd close nad-42 --reason "Deployed to production"
 bd ready                           # Show unblocked issues
 bd status                          # Project health overview
 bd list --label active-now         # Session recovery
+bd stale                           # Show issues not updated recently
+bd count                           # Count issues matching filters
+bd orphans                         # Issues referenced in commits but still open
+
+# Quick capture
+bd q "Fix login redirect"          # Create issue, output only ID
+bd todo add "Update README"        # Lightweight task (type=task, p=2)
+bd todo                            # List open TODO tasks
+bd todo done <id>                  # Close a TODO
 
 # Completing work
 bd close nad-42 --suggest-next     # Close and show newly unblocked
 bd close nad-1 nad-2 nad-3         # Bulk close multiple issues
-bd delete nad-42 --reason "Duplicate of nad-38"  # Delete with audit trail (v0.41+)
+bd reopen <id>                     # Reopen a closed issue
+bd delete nad-42 --reason "Duplicate of nad-38"
+
+# Issue management
+bd rename <old-id> <new-id>        # Rename to memorable ID
+bd children <parent-id>            # List child beads of a parent
+bd defer <id>                      # Defer issue for later
+bd undefer <id>                    # Restore deferred issue to open
+bd promote <wisp-id>               # Promote ephemeral wisp to permanent bead
+
+# Quality checks
+bd find-duplicates                 # Mechanical text similarity (default)
+bd find-duplicates --method ai     # AI-powered semantic comparison
+bd lint                            # Check issues for missing template sections
+bd query "<query>"                 # Query issues using query language
 
 # Dependencies
 bd dep add <issue> <depends-on>                      # Blocking (default)
-bd dep add <issue> --blocked-by <other>              # Clearer alias (v0.44+)
-bd dep add <issue> --depends-on <other>              # Clearer alias (v0.44+)
+bd dep add <issue> --blocked-by <other>              # Clearer alias
+bd dep add <issue> --depends-on <other>              # Clearer alias
 bd dep add <issue> <depends-on> --type related       # Related issues
 bd dep add <issue> <depends-on> --type discovered-from
 bd dep add <issue> <depends-on> --type parent-child  # Epic/subtask
@@ -156,3 +179,4 @@ When completing TODO items:
 - **task** - Work item (tests, docs, refactoring)
 - **epic** - Large feature with subtasks
 - **chore** - Maintenance (dependencies, tooling)
+- **decision** - Architecture decision record (ADR)
