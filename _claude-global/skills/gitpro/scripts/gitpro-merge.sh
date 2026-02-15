@@ -119,6 +119,12 @@ echo "Pushing main and tags..."
 git push
 [ -n "$NEW_VERSION" ] && git push --tags
 
+# Beads sync post-merge
+if [ -d ".beads" ] && command -v bd >/dev/null 2>&1; then
+    echo "Syncing beads..."
+    bd sync --full 2>&1 || echo "Warning: beads sync had issues (non-fatal)"
+fi
+
 # Delete merged source branch
 echo "Cleaning up source branch..."
 if git branch --merged main | grep -q "$SOURCE_BRANCH"; then

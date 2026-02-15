@@ -100,9 +100,10 @@ git commit --no-verify -m "$MESSAGE
 
 Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
 
-# Beads sync post-commit
+# Beads sync post-commit (full cycle: pull, merge, export, commit, push)
 if [ -d ".beads" ] && command -v bd >/dev/null 2>&1; then
-    bd sync >/dev/null 2>&1 || true
+    echo "Syncing beads..."
+    bd sync --full 2>&1 || echo "Warning: beads sync had issues (non-fatal)"
 fi
 
 # Push

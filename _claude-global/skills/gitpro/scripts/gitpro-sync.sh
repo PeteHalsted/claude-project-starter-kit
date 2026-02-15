@@ -20,6 +20,14 @@ done
 
 CURRENT_BRANCH=$(git branch --show-current)
 
+# Beads sync helper - runs regardless of whether code changed
+beads_sync() {
+    if [ -d ".beads" ] && command -v bd >/dev/null 2>&1; then
+        echo "Syncing beads..."
+        bd sync --full 2>&1 || echo "Warning: beads sync had issues (non-fatal)"
+    fi
+}
+
 echo "=== GitPro Sync ==="
 echo "Branch: $BRANCH"
 echo ""
@@ -67,11 +75,15 @@ fi
 # 5. Check for incoming changes
 REMOTE_AHEAD=$(git rev-list "HEAD..origin/${BRANCH}" --count 2>/dev/null || echo "0")
 if [ "$REMOTE_AHEAD" -eq 0 ]; then
-    echo "Already up to date."
+    echo "Code already up to date."
     # Switch back if we changed branches
     if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
         git checkout "$CURRENT_BRANCH"
     fi
+    # Still sync beads - other dev may have synced issues without code changes
+    beads_sync
+    echo ""
+    echo "=== Sync Complete ==="
     exit 0
 fi
 
@@ -95,6 +107,9 @@ if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
     echo "Pushing $CURRENT_BRANCH..."
     git push origin "$CURRENT_BRANCH"
 fi
+
+# 9. Beads sync - pull/push latest issues
+beads_sync
 
 echo ""
 echo "=== Sync Complete ==="
