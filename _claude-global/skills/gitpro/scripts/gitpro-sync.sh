@@ -84,12 +84,22 @@ echo ""
 echo "Fast-forwarding..."
 git merge --ff-only "origin/${BRANCH}"
 
-# 8. Switch back if we changed branches
+# 8. Switch back and merge if we changed branches
 if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
     echo "Switching back to $CURRENT_BRANCH..."
     git checkout "$CURRENT_BRANCH"
+
+    echo "Merging $BRANCH into $CURRENT_BRANCH..."
+    git merge "$BRANCH" --no-edit
+
+    echo "Pushing $CURRENT_BRANCH..."
+    git push origin "$CURRENT_BRANCH"
 fi
 
 echo ""
 echo "=== Sync Complete ==="
-echo "Updated $BRANCH to $(git rev-parse --short "origin/${BRANCH}")"
+if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
+    echo "Updated $BRANCH and merged into $CURRENT_BRANCH"
+else
+    echo "Updated $BRANCH to $(git rev-parse --short "origin/${BRANCH}")"
+fi

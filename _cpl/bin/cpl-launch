@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+slot="$1"
+project="$2"
+mode="$3"
+proj_path="$4"
+
+"$HOME/bin/cpl-slot" set-pid "$slot" $$
+
+# Normal exit: release slot and close Zed if needed
+close_flag=""
+[ "$mode" = "both" ] && close_flag="close-zed"
+trap '"$HOME/bin/cpl-cleanup" "$slot" "$project" $close_flag' EXIT
+
+cd "$proj_path" || exit 1
+
+if [ "$mode" = "both" ]; then
+  (zed . >/dev/null 2>&1 &)
+fi
+
+"$HOME/.local/bin/claude"

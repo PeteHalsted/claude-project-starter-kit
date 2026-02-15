@@ -175,6 +175,28 @@ compare_files() {
     return 0
 }
 
+cpl_version_hint() {
+    local kit_path="$1"
+    local cpl_version_file="$kit_path/_cpl/VERSION"
+    local installed_version_file="$HOME/.cpl-version"
+
+    [[ -f "$cpl_version_file" ]] || return 0
+
+    local repo_version installed_version
+    repo_version=$(tr -d '[:space:]' < "$cpl_version_file")
+
+    if [[ -f "$installed_version_file" ]]; then
+        installed_version=$(tr -d '[:space:]' < "$installed_version_file")
+        if [[ "$repo_version" != "$installed_version" ]]; then
+            echo ""
+            warn "CPL: v${installed_version} installed, v${repo_version} available. Run /sync-cpl to update."
+        fi
+    else
+        echo ""
+        warn "CPL: not installed. v${repo_version} available. Run /sync-cpl to install."
+    fi
+}
+
 main() {
     local kit_path
     kit_path=$(detect_kit_path) || error "Cannot find starter kit. Run from starter kit directory or configure path first."
@@ -185,6 +207,11 @@ main() {
     [[ "$mode" == "MASTER" ]] && update_config "$kit_path"
 
     compare_files "$kit_path" "$mode"
+    local compare_exit=$?
+
+    cpl_version_hint "$kit_path"
+
+    return $compare_exit
 }
 
 main "$@"

@@ -31,3 +31,7 @@ vite.config.ts.*
 *.tar.gz
 .vscode
 .claude/master.txt
+
+# CPL compiled binaries (built by sync-cpl.sh)
+_cpl/bin/cpl-picker
+_cpl/bin/cpl-close-zed

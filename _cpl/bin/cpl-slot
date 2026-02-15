@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SLOT_DIR="$HOME/.cpl-slots"
+mkdir -p "$SLOT_DIR"
+
+case "${1:-}" in
+  claim)
+    name="${2:?project name required}"
+    # Clean stale slots (no PID = stale, dead PID = stale)
+    for i in 1 2 3; do
+      if [ -f "$SLOT_DIR/$i" ]; then
+        pid=$(sed -n '2p' "$SLOT_DIR/$i" 2>/dev/null || echo "")
+        if [ -z "$pid" ] || ! kill -0 "$pid" 2>/dev/null; then
+          rm -f "$SLOT_DIR/$i"
+        fi
+      fi
+    done
+    # Claim first available slot
+    for i in 1 2 3; do
+      if [ ! -f "$SLOT_DIR/$i" ]; then
+        echo "$name" > "$SLOT_DIR/$i"
+        echo "$i"
+        exit 0
+      fi
+    done
+    echo "0"
+    ;;
+  set-pid)
+    slot="${2:?slot number required}"
+    pid="${3:?pid required}"
+    if [ -f "$SLOT_DIR/$slot" ]; then
+      name=$(head -1 "$SLOT_DIR/$slot")
+      printf '%s\n%s\n' "$name" "$pid" > "$SLOT_DIR/$slot"
+    fi
+    ;;
+  release)
+    slot="${2:?slot number required}"
+    rm -f "$SLOT_DIR/$slot"
+    ;;
+  clean)
+    rm -f "$SLOT_DIR"/{1,2,3}
+    echo "All slots cleared"
+    ;;
+  status)
+    for i in 1 2 3; do
+      if [ -f "$SLOT_DIR/$i" ]; then
+        name=$(head -1 "$SLOT_DIR/$i")
+        echo "Slot $i: $name"
+      else
+        echo "Slot $i: empty"
+      fi
+    done
+    ;;
+  *)
+    echo "Usage: cpl-slot {claim|release|set-pid|clean|status} ..." >&2
+    exit 1
+    ;;
+esac

@@ -11,6 +11,12 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ---
 
+### February 15, 2026
+
+- **✨ CPL Version-Tracked Sync** - CPL source moved into repo with `sync-cpl.sh` for all-or-nothing install/update with version tracking
+- **✨ CPL Picker Improvements** - Floating window for reliable Spotlight focus, dynamic terminal-only directory options (~, ~/projects), persistent last-used selection
+- **🐛 CPL Shell Directory Fix** - Shell now stays in project directory after exiting Claude (cd before launch instead of inside script)
+
 ### February 3, 2026
 - **✨ Python Pre-Commit Validation** - pre-gitpro hook now runs pyright/mypy type checking for Python projects
 - **✨ Language-Aware Rule Sync** - sync-starter-kit detects project type and uses -py.md rule variants for Python projects

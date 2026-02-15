@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+slot="${1:?slot required}"
+project="${2:-}"
+close_zed="${3:-}"
+
+"$HOME/bin/cpl-slot" release "$slot"
+
+if [ "$close_zed" = "close-zed" ] && [ -n "$project" ]; then
+  "$HOME/bin/cpl-close-zed" "$project" 2>/dev/null || true
+fi
