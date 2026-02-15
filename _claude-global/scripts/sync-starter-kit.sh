@@ -75,10 +75,21 @@ declare -a MCP_RULES=(
 # Check if global MCP is installed
 check_global_mcp() {
     local mcp_name="$1"
-    # Use claude mcp list and check for the MCP name
-    if claude mcp list 2>/dev/null | grep -qi "$mcp_name"; then
-        return 0
+
+    # Check ~/.claude.json for user-level MCPs (mcpServers top-level key)
+    if [[ -f "$HOME/.claude.json" ]]; then
+        if command -v jq &>/dev/null; then
+            if jq -e ".mcpServers[\"$mcp_name\"]" "$HOME/.claude.json" &>/dev/null; then
+                return 0
+            fi
+        else
+            # Fallback: grep for the MCP name in mcpServers block
+            if grep -q "\"$mcp_name\"" "$HOME/.claude.json" 2>/dev/null; then
+                return 0
+            fi
+        fi
     fi
+
     return 1
 }
 
