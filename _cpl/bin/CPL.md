@@ -59,16 +59,94 @@ Picker offers 4 radio buttons:
 
 ## Window Management
 
-- **Monitor:** Right monitor (x=3440, width=3440)
-- **Layout:** 3 equal slots filling right-to-left (Slot 1 = rightmost, Slot 3 = leftmost)
+### Layout Config
+
+All layout values are configured at the top of `cpl-app.applescript`. These should eventually be read from `~/.cpl.conf`:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `monX` | `0` | Monitor X offset (UI-scaled coordinates) |
+| `monW` | `3840` | Monitor width |
+| `monH` | `1080` | Monitor height |
+| `editorShare` | `0.5` | Fraction of monitor width for editor (Zed) |
+| `maxSlots` | `3` | Number of Claude iTerm2 slots |
+
+### Claude Slots
+
+- **Layout:** `maxSlots` equal-width slots filling right-to-left across the full monitor (Slot 1 = rightmost, Slot 3 = leftmost)
 - **Slot files:** `~/.cpl-slots/{1,2,3}` — contain PID of owning process
 - **Stale cleanup:** On claim, checks if slot's PID is alive; reclaims if dead or missing
+
+### Zed Positioning
+
+In `both` and `zed` modes, Zed is explicitly positioned to the left portion of the monitor (`monX` to `monX + editorW`) via System Events. This is necessary for single-monitor setups where Zed and Claude share the same display. Zed sits behind the Claude slots — switch to it via Cmd+Tab or clicking.
+
+**Accessibility permission required:** System Events window positioning requires the calling app (CPL.app or Script Editor) to have Accessibility access in System Settings > Privacy & Security > Accessibility.
+
+### Claude Binary
+
+`cpl-launch` and `cpl` invoke `claude` via PATH resolution (not a hardcoded path). This supports all install methods (`~/.local/bin/`, `/opt/homebrew/bin/`, etc.).
 
 ## Zed Close on Exit
 
 EXIT trap in `cpl-launch` calls `cpl-cleanup`, which calls compiled `cpl-close-zed` (Accessibility API, ~0.4s). Total delay ~9-10s after window close due to Claude's graceful shutdown — unavoidable.
 
 **Why not other approaches:** ~10 alternatives were tested (HUP trap, TTY polling, PTY POLLHUP, AX API window monitor, CGWindowListCopyWindowInfo). All failed because iTerm2 keeps the window/PTY alive for 5-8s after close (undo-close feature).
+
+## Required macOS Permissions
+
+The Zed auto-close and window positioning features use the macOS Accessibility API (`AXUIElement`). Without proper permissions, `cpl-close-zed` exits 0 but silently fails.
+
+### Accessibility (System Settings > Privacy & Security > Accessibility)
+
+| App | Why |
+|-----|-----|
+| **iTerm** (`/Applications/iTerm.app`) | Parent process running `cpl-close-zed`. Accessibility grants are inherited through the process chain |
+| **cpl-close-zed** (`~/bin/cpl-close-zed`) | Directly calls `AXUIElement` APIs to find and close Zed windows |
+| **CPL.app** or **Script Editor** | `cpl-app.applescript` uses System Events to position Zed windows |
+
+To add `cpl-close-zed`: click **+**, then **Cmd+Shift+G** and type `/Users/<username>/bin/cpl-close-zed` (the standard file picker won't show `~/bin`).
+
+### Automation (System Settings > Privacy & Security > Automation)
+
+| App | Controls | Why |
+|-----|----------|-----|
+| **Script Editor** / `osascript` | **iTerm** | `cpl-app.applescript` creates windows, sets bounds, writes commands |
+| **Script Editor** / `osascript` | **System Events** | Window positioning for Zed |
+| **Script Editor** / `osascript` | **Zed Preview** | `open -a` and positioning on launch |
+
+Automation permissions are prompted on first use — run `cpl-app.applescript` once and approve each dialog.
+
+### Verification
+
+```bash
+# Test cpl-close-zed (open Zed on a project first):
+~/bin/cpl-close-zed "myproject"
+# Zed closes = permissions correct
+# Zed stays open + exit code 0 = Accessibility missing
+
+# Test AppleScript can see Zed windows:
+osascript -e 'tell application "System Events" to get name of every window of process "zed"'
+# Returns window titles = working. Empty = permission missing.
+```
+
+### Troubleshooting
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `cpl-close-zed` exits 0 but Zed stays open | Accessibility not granted to iTerm or the binary | Add both to Accessibility in System Settings |
+| AppleScript returns empty window list | Automation not granted for System Events | Run AppleScript manually to trigger prompt |
+| "Not authorized to send Apple events" | Automation permission denied | Enable in System Settings > Automation |
+| Works on one machine but not another | Permissions are per-machine, not synced | Grant on each machine after `sync-cpl` |
+| Permission granted but still fails | Binary was recompiled/resynced (different signature) | Remove and re-add the Accessibility entry |
+
+### New Machine Setup
+
+After running `sync-cpl.sh` on a new machine:
+
+1. Grant Accessibility to iTerm, `cpl-close-zed`, and CPL.app/Script Editor
+2. Run CPL once in "Claude + Zed" mode — approve all Automation prompts
+3. Verify with `~/bin/cpl-close-zed "testproject"`
 
 ## Key Design Decisions
 

@@ -2,14 +2,15 @@ import AppKit
 
 let args = CommandLine.arguments
 guard args.count > 1 else {
-    fputs("Usage: cpl-close-zed <project-name>\n", stderr)
+    fputs("Usage: cpl-close-zed <project-name> [app-name]\n", stderr)
     exit(1)
 }
 let project = args[1]
+let appName = args.count > 2 ? args[2] : "Zed Preview"
 
-// Find Zed Preview process
+// Find Zed process by app name
 guard let zedApp = NSWorkspace.shared.runningApplications.first(where: {
-    $0.localizedName == "Zed Preview"
+    $0.localizedName == appName
 }) else {
     exit(0)
 }

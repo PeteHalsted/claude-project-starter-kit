@@ -27,4 +27,4 @@ fi
 ( zed "$proj" >/dev/null 2>&1 & disown ) || true
 
 # Run Claude Code in foreground
-"$HOME/.local/bin/claude"
+claude
