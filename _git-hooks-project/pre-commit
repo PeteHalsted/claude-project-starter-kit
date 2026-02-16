@@ -3,9 +3,7 @@
 #
 # All git commits should go through the GitPro skill which:
 # 1. Validates code quality (via Claude Code PreToolUse hook)
-# 2. Validates TODO tracking (via Claude Code PreToolUse hook)
-# 3. Handles beads sync (in scripts)
-# 4. Uses --no-verify to bypass this hook (since validation already passed)
+# 2. Uses --no-verify to bypass this hook (since validation already passed)
 #
 # This hook blocks direct git commits and directs users to GitPro.
 #
@@ -31,10 +29,8 @@ echo "  • \"merge\"      - Merge to main with version bump"
 echo ""
 echo "GitPro ensures:"
 echo "  ✓ Code quality validation"
-echo "  ✓ TODO tracking validation"
 echo "  ✓ Conventional commit format with emojis"
 echo "  ✓ Automatic changelog updates"
-echo "  ✓ Beads sync"
 echo ""
 echo "Emergency bypass: SKIP_GIT_GUARD=1 git commit ..."
 echo ""

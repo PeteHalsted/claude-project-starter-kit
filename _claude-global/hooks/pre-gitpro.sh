@@ -71,46 +71,6 @@ elif [ "$PROJECT_TYPE" = "python" ]; then
 fi
 
 # ============================================
-# VALIDATION 2: TODO Tracking (if beads used)
-# ============================================
-if [ -d ".beads" ] && command -v bd >/dev/null 2>&1 && command -v rg >/dev/null 2>&1; then
-    echo "Pre-gitpro: Validating TODO tracking..." >&2
-
-    # Set file type flags based on project
-    if [ "$PROJECT_TYPE" = "node" ]; then
-        RG_TYPES="--type ts --type js --glob !**/node_modules/**"
-    elif [ "$PROJECT_TYPE" = "python" ]; then
-        RG_TYPES="--type py --glob !**/.venv/** --glob !**/venv/**"
-    fi
-
-    INVALID_TODOS=$(rg "TODO\(|FIXME\(|HACK\(|XXX\(" \
-        $RG_TYPES \
-        --line-number \
-        --no-heading \
-        --color never \
-        2>/dev/null | while IFS=: read -r file line comment; do
-
-        BEAD_ID=$(echo "$comment" | grep -oE '(TODO|FIXME|HACK|XXX)\(([a-z]+-[a-z0-9]+)\)' | grep -oE '[a-z]+-[a-z0-9]+')
-
-        if [[ -z "$BEAD_ID" ]]; then
-            echo "$file:$line - MISSING BEAD ID"
-        else
-            BEAD_STATUS=$(bd list --json 2>/dev/null | jq -r --arg id "$BEAD_ID" '.[] | select(.id == $id) | .status')
-
-            if [[ -z "$BEAD_STATUS" ]]; then
-                echo "$file:$line - BEAD NOT FOUND ($BEAD_ID)"
-            elif [[ "$BEAD_STATUS" == "closed" ]]; then
-                echo "$file:$line - BEAD CLOSED ($BEAD_ID)"
-            fi
-        fi
-    done)
-
-    if [[ -n "$INVALID_TODOS" ]]; then
-        deny "GITPRO BLOCKED - Invalid TODOs\\n\\n$INVALID_TODOS\\n\\nFix TODO comments before committing."
-    fi
-fi
-
-# ============================================
 # VALIDATION 3: Toast Check (Node only, if lint:toast exists)
 # ============================================
 if [ "$PROJECT_TYPE" = "node" ] && grep -q '"lint:toast"' package.json 2>/dev/null; then

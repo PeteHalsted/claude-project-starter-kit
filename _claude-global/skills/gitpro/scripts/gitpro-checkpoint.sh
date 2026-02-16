@@ -19,13 +19,6 @@ fi
 # Stage all changes
 git add -A
 
-# Beads sync (since we're using --no-verify)
-if [ -d ".beads" ] && command -v bd >/dev/null 2>&1; then
-    bd sync --flush-only >/dev/null 2>&1 || true
-    [ -f ".beads/issues.jsonl" ] && git add ".beads/issues.jsonl" 2>/dev/null || true
-    [ -f ".beads/deletions.jsonl" ] && git add ".beads/deletions.jsonl" 2>/dev/null || true
-fi
-
 # Commit with timestamp
 if [ "$MESSAGE_PREFIX" = "Checkpoint" ]; then
     COMMIT_MSG="${TIMESTAMP} Checkpoint"

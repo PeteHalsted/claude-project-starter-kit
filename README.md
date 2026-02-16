@@ -46,7 +46,7 @@ If you prefer manual control:
 | Folder | Destination | Purpose |
 |--------|-------------|---------|
 | `_claude-global/` | `~/.claude/` | Global Claude Code config (skills, hooks) |
-| `_git-hooks-project/` | `project/.git/hooks/` | Git hooks (TypeScript validation, beads sync) |
+| `_git-hooks-project/` | `project/.git/hooks/` | Git hooks (TypeScript validation) |
 | `_claude-project/rules/` | `project/.claude/rules/` | Rule templates (synced to native rules directory) |
 | `project-documentation/` | `project/project-documentation/` | Documentation template structure |
 
@@ -116,8 +116,6 @@ Located in `_claude-global/hooks/`:
 - `git-guard.sh` - Blocks dangerous git commands (forces gitpro skill)
 - `block-db-commands.sh` - Blocks Drizzle commands (requires human)
 - `dev-server-guard.sh` - Prevents AI from starting/killing dev server
-- `beads-inject.sh` - Injects beads workflow when `.beads/` exists
-- `beads-workflow.md` - Custom beads workflow guide (replaces `bd prime`)
 
 ## Tech Stack Context
 

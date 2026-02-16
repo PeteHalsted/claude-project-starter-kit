@@ -2,7 +2,6 @@
 # Custom Claude Code statusline - Pete Halsted
 # Line 1: Core info (directory, branch, version, model)
 # Line 2: Native Claude metrics (context, cost, duration, lines changed)
-# Line 3: ccusage output (5hr limits, burn rate)
 
 # ==========================================
 # SETTINGS - ADJUST THESE AS NEEDED
@@ -113,13 +112,3 @@ printf '📊 %s%dK / %dK = %d%% %s%s %s  💰 $%.2f  ⏱️  %dh %dm  📝 +%d -
   "$pct_color" "$current_k" "$window_k" "$pct" "$bar" "$(rst)" "$compaction_badge" \
   "$total_cost" "$duration_hr" "$duration_min_remainder" "$lines_added" "$lines_removed"
 
-# ==========================================
-# LINE 3: CCUSAGE (5HR LIMITS & BURN RATE)
-# ==========================================
-
-# DISABLED FOR NOW - uncomment to re-enable
-# if command -v ccusage >/dev/null 2>&1; then
-#   echo -n "$input" | ccusage statusline --cost-source auto --visual-burn-rate emoji-text --context-low-threshold 60 --context-medium-threshold 90
-# else
-#   printf '%sccusage not installed%s\n' "$(yellow)" "$(rst)"
-# fi

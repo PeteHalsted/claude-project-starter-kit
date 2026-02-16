@@ -119,12 +119,6 @@ echo "Pushing main and tags..."
 git push
 [ -n "$NEW_VERSION" ] && git push --tags
 
-# Beads sync post-merge
-if [ -d ".beads" ] && command -v bd >/dev/null 2>&1; then
-    echo "Syncing beads..."
-    bd sync --full 2>&1 || echo "Warning: beads sync had issues (non-fatal)"
-fi
-
 # Delete merged source branch
 echo "Cleaning up source branch..."
 if git branch --merged main | grep -q "$SOURCE_BRANCH"; then
@@ -140,10 +134,6 @@ echo "Creating fresh working branch: $WORKING_BRANCH"
 
 # Check if working branch exists and clean it up
 if git branch --list "$WORKING_BRANCH" | grep -q "$WORKING_BRANCH"; then
-    # Check for beads worktree
-    if git worktree list | grep -q "$WORKING_BRANCH"; then
-        git worktree remove ".git/beads-worktrees/$WORKING_BRANCH" --force 2>/dev/null || true
-    fi
     git branch -D "$WORKING_BRANCH" 2>/dev/null || true
 fi
 

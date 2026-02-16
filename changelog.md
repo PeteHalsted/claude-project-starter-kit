@@ -12,7 +12,8 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 ---
 
 ### February 15, 2026
-- **✨ Beads Full Sync** - All gitpro operations (commit, merge, sync) now run `bd sync --full` to keep issue database in sync across machines
+- **🔧 Remove Beads Integration** - Removed all beads sync, hooks, skills, docs, and TODO validation. Removed ccusage from statusline
+- **✨ Beads Removed ** - Beads completely removed from all logic, projects 
 - **✨ CPL Per-Machine Config** - Layout now configured in ~/.cpl.conf with auto-detected display resolution and Zed app. Supports dual-monitor setups with independent editor/Claude placement
 - **📚 Beads Docs Update** - SKILL.md updated for v0.50.3: bd todo, bd rename, bd find-duplicates, bd children, bd q, bd reopen, bd defer/undefer, bd stale, bd count, bd lint, bd query, bd orphans, bd promote, and decision issue type
 - **✨ Configurable Layout** - Monitor geometry and slot count now configurable in cpl-app.applescript

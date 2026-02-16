@@ -17,16 +17,6 @@ chmod +x .git/hooks/pre-commit
    - Skips if project doesn't have `check-types` script
    - Bypass for checkpoints: `SKIP_TS_CHECK=1`
 
-2. **Beads Sync** (if .beads/ exists)
-   - Imports latest JSONL to database
-   - Flushes pending database changes to JSONL
-   - Stages JSONL files if modified
-
-3. **TODO Validation** (if .beads/ exists)
-   - Scans code for `TODO(xxx-NNN):` patterns
-   - Verifies each referenced bead exists and is open
-   - Blocks commit if untracked TODOs found
-
 ## Bypass Options
 
 | Variable | Effect |
@@ -36,16 +26,15 @@ chmod +x .git/hooks/pre-commit
 
 ## Why Local Hooks Instead of Global?
 
-**DO NOT use global hooks** (`git config --global core.hooksPath`). This breaks beads.
+**DO NOT use global hooks** (`git config --global core.hooksPath`). This overrides local hooks.
 
 When you set a global hooks path:
 1. Git ignores ALL local hooks in every repository
-2. Beads' built-in hooks stop running
-3. Database sync breaks
+2. Project-specific hooks stop running
 
 ## Hooks Included
 
 | Hook | Purpose |
 |------|---------|
-| `pre-commit` | TypeScript + Beads sync + TODO validation |
+| `pre-commit` | TypeScript validation |
 | `pre-merge-commit` | Same as pre-commit, runs during merge commits |

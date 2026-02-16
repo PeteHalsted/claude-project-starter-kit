@@ -34,7 +34,6 @@ Git workflow automation using scripts for atomic, efficient operations.
                     ↓
 ┌─────────────────────────────────────────┐
 │ Bash Scripts (atomic execution)         │
-│ - Handle beads sync                     │
 │ - Use --no-verify (validation done)     │
 │ - Single script = single operation      │
 └─────────────────────────────────────────┘
@@ -115,12 +114,10 @@ Full conventional commit with changelog and optional branch rename.
 | `--changelog` | No | Changelog entry text (if changelog.md exists) |
 
 **What Script Does:**
-- Beads sync (pre-commit)
 - Stage all changes
 - Rename branch (if --old-branch/--new-branch provided)
 - Update changelog (if --changelog provided)
 - Commit with --no-verify
-- Beads sync (post-commit)
 - Push to remote (non-main branches)
 
 **CRITICAL: Analyze ALL Changes**
@@ -169,7 +166,6 @@ Full merge workflow with version bump and cleanup.
 - Merge source branch
 - Bump version, commit, tag (if package.json or pyproject.toml exists)
 - Push main and tags
-- Beads sync (`bd sync --full`) - syncs issue database via beads-sync branch
 - Delete merged source branch
 - Create fresh wt-{username} branch
 
@@ -201,7 +197,6 @@ Safe fast-forward from remote. Use when another machine pushed changes and local
 - Shows incoming commits
 - Fast-forwards with `--ff-only` (refuses if not a clean fast-forward)
 - Switches back to original branch if it changed
-- Beads sync (`bd sync --full`) - pulls/pushes issue database via beads-sync branch
 
 **Safety Guarantees:**
 - Will NOT overwrite uncommitted changes

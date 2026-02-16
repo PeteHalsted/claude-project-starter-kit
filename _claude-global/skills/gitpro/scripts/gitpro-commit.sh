@@ -30,12 +30,6 @@ if [ -z "$MESSAGE" ]; then
     exit 1
 fi
 
-# Beads sync pre-commit
-if [ -d ".beads" ] && command -v bd >/dev/null 2>&1; then
-    echo "Syncing beads..."
-    bd sync >/dev/null 2>&1 || true
-fi
-
 # Stage all changes
 git add -A
 
@@ -88,23 +82,11 @@ if [ -n "$CHANGELOG_ENTRY" ] && [ -f "changelog.md" ]; then
     git add changelog.md
 fi
 
-# Stage beads files
-if [ -d ".beads" ]; then
-    [ -f ".beads/issues.jsonl" ] && git add ".beads/issues.jsonl" 2>/dev/null || true
-    [ -f ".beads/deletions.jsonl" ] && git add ".beads/deletions.jsonl" 2>/dev/null || true
-fi
-
 # Commit
 echo "Committing: $MESSAGE"
 git commit --no-verify -m "$MESSAGE
 
 Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
-
-# Beads sync post-commit (full cycle: pull, merge, export, commit, push)
-if [ -d ".beads" ] && command -v bd >/dev/null 2>&1; then
-    echo "Syncing beads..."
-    bd sync --full 2>&1 || echo "Warning: beads sync had issues (non-fatal)"
-fi
 
 # Push
 CURRENT_BRANCH=$(git branch --show-current)

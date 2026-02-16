@@ -200,7 +200,7 @@ Requires same GitHub account authentication.
 ## Recommended Usage Strategy
 
 **Use local CLI for:**
-- Workflows depending on custom CLI tools (beads, etc.)
+- Workflows depending on custom CLI tools
 - Heavy MCP server usage
 - Long-running tasks
 
