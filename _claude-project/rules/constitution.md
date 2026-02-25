@@ -117,7 +117,22 @@ Toasts are deprecated. Use contextual feedback instead. See `development-guideli
 - Test with real APIs, not mocks.
 - Architecture separation: validation inline in production code, not imported from spec files.
 
-## XI. LSP Tool Usage
+## XI. Server-Side Static Assets
+
+**Never use `import.meta.url` for runtime file reads.** Bundlers (Vite, Rollup, esbuild) rewrite the path and do not copy the referenced files into the build output. This causes silent production failures.
+
+| Pattern | Result |
+|---------|--------|
+| `readFileSync` + `import.meta.url` | **BROKEN** — file not found in production |
+| `readFileSync` + `process.cwd()` | **CORRECT** — predictable path in all environments |
+
+**Rules:**
+- Static assets loaded at runtime (templates, images, PDFs) go in `server-assets/` at the app root
+- Resolve paths via `process.cwd()` (e.g., `resolve(process.cwd(), 'server-assets/email/template.html')`)
+- The Dockerfile must `COPY` `server-assets/` into the production image
+- Never place runtime-loaded files inside `src/` — bundlers will not include them
+
+## XII. LSP Tool Usage
 
 **Use LSP for semantic code intelligence.** The LSP tool provides type-aware analysis superior to text-based search.
 
