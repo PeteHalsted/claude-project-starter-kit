@@ -98,7 +98,26 @@ Toasts are deprecated. Use contextual feedback instead. See `development-guideli
 
 **Cleanup**: When editing files with toasts, migrate them.
 
-## IX. Debugging Protocol
+## IX. Timezone-Aware Code (Zero Tolerance)
+
+**Every line of code that touches time MUST consider timezone.**
+
+**Before writing ANY time-related code, ask**: "What timezone is this stored in? What timezone does the consumer expect?"
+
+**Core principle**: If data is stored in local time, query logic MUST use the same local time. If data is stored in UTC, convert to local before user-facing display/filtering. Never mix conventions — match your query boundaries to your storage format.
+
+| Forbidden | Why | Fix |
+|-----------|-----|-----|
+| Getting current time without explicit tz | Naive/ambiguous timestamps | Always specify timezone explicitly |
+| "Today" without tz in user-facing code | Server date ≠ user's date across tz boundaries | Derive from timezone-aware now |
+| API queries with implicit "today" | API may use different tz than stored data | Pass explicit date in the correct tz |
+| UTC query boundaries on local-time data | Creates mid-day cutoffs for non-UTC users | Query in the same tz the data was stored in |
+
+**This applies to**: database queries, API calls, date filtering, log display, scheduling, status lines, summaries, check-ins — everything.
+
+**Why this rule exists**: Mismatched timezone conventions between storage and query logic create silent mid-day cutoffs, showing users wrong data. This has caused repeated bugs across projects.
+
+## X. Debugging Protocol
 
 **New code is guilty until proven innocent.**
 
@@ -110,14 +129,14 @@ Toasts are deprecated. Use contextual feedback instead. See `development-guideli
 6. **Fix** - Implement with verification
 7. **Defend** - Add test to prevent regression
 
-## X. Code Standards
+## XI. Code Standards
 
 - TypeScript required. Functional components with hooks.
 - Production code NEVER imports from `docs/`, `specs/`, `project-documentation/`.
 - Test with real APIs, not mocks.
 - Architecture separation: validation inline in production code, not imported from spec files.
 
-## XI. Server-Side Static Assets
+## XII. Server-Side Static Assets
 
 **Never use `import.meta.url` for runtime file reads.** Bundlers (Vite, Rollup, esbuild) rewrite the path and do not copy the referenced files into the build output. This causes silent production failures.
 
@@ -132,7 +151,7 @@ Toasts are deprecated. Use contextual feedback instead. See `development-guideli
 - The Dockerfile must `COPY` `server-assets/` into the production image
 - Never place runtime-loaded files inside `src/` — bundlers will not include them
 
-## XII. LSP Tool Usage
+## XIII. LSP Tool Usage
 
 **Use LSP for semantic code intelligence.** The LSP tool provides type-aware analysis superior to text-based search.
 
@@ -151,5 +170,5 @@ Toasts are deprecated. Use contextual feedback instead. See `development-guideli
 - **LSP**: Type-aware queries ("what calls this function?", "what implements this interface?")
 - **Grep**: Text pattern matching ("find all TODO comments", "find hardcoded strings")
 
-**Diagnostics**: LSP provides real-time TypeScript errors. See Section III - ignoring these is a CRITICAL FAILURE.
+**Diagnostics**: LSP provides real-time TypeScript errors. See Section III — ignoring these is a CRITICAL FAILURE.
 

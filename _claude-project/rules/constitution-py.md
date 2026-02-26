@@ -97,7 +97,26 @@ logger.error("error message", exc_info=True)
 - No compatibility layers
 - Single source of truth
 
-## VIII. Async Best Practices
+## VIII. Timezone-Aware Code (Zero Tolerance)
+
+**Every line of code that touches time MUST consider timezone.**
+
+**Before writing ANY time-related code, ask**: "What timezone is this stored in? What timezone does the consumer expect?"
+
+**Core principle**: If data is stored in local time, query logic MUST use the same local time. If data is stored in UTC, convert to local before user-facing display/filtering. Never mix conventions — match your query boundaries to your storage format.
+
+| Forbidden | Why | Fix |
+|-----------|-----|-----|
+| `datetime.now()` without tz | Naive datetime, ambiguous on servers | `datetime.now(tz)` with explicit timezone |
+| `date.today()` in user-facing code | Server date ≠ user's date across tz boundaries | Derive from timezone-aware `datetime.now(tz)` |
+| API queries with implicit "today" | API may use different tz than stored data | Pass explicit date in the correct tz |
+| UTC query boundaries on local-time data | Creates mid-day cutoffs for non-UTC users | Query in the same tz the data was stored in |
+
+**This applies to**: database queries, API calls, date filtering, log display, scheduling, status lines, summaries, check-ins — everything.
+
+**Why this rule exists**: Mismatched timezone conventions between storage and query logic create silent mid-day cutoffs, showing users wrong data. This has caused repeated bugs across projects.
+
+## IX. Async Best Practices
 
 **Never block the event loop.**
 
@@ -108,7 +127,7 @@ logger.error("error message", exc_info=True)
 | Sync file I/O in async | `aiofiles` |
 | Blocking DB calls | async drivers (asyncpg, etc.) |
 
-## IX. Debugging Protocol
+## X. Debugging Protocol
 
 **New code is guilty until proven innocent.**
 
@@ -120,14 +139,14 @@ logger.error("error message", exc_info=True)
 6. **Fix** - Implement with verification
 7. **Defend** - Add test to prevent regression
 
-## X. Code Standards
+## XI. Code Standards
 
 - Python 3.11+ required. Type hints on all functions.
 - Production code NEVER imports from `docs/`, `specs/`, `project-documentation/`.
 - Test with real APIs, not mocks.
 - Architecture separation: validation inline in production code, not imported from spec files.
 
-## XI. Type Checker Usage
+## XII. Type Checker Usage
 
 **Use pyright or mypy for type checking.** Provides type-aware analysis superior to text-based search.
 
@@ -135,4 +154,4 @@ logger.error("error message", exc_info=True)
 - **Type checker**: Type-aware queries ("what type is this?", "what implements this protocol?")
 - **Grep**: Text pattern matching ("find all TODO comments", "find hardcoded strings")
 
-**Diagnostics**: Type checker provides real-time Python errors. See Section III - ignoring these is a CRITICAL FAILURE.
+**Diagnostics**: Type checker provides real-time Python errors. See Section III — ignoring these is a CRITICAL FAILURE.
