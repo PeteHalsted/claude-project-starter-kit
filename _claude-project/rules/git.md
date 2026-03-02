@@ -69,6 +69,14 @@ This applies to:
 
 **Principle**: Skills and agents handle their own orchestration. Trust them to dispatch subagents when beneficial. Use them proactively to save context, enable parallelism, and leverage specialized workflows.
 
+## ABSOLUTE RULE: Always Commit ALL Changes
+
+When the user says "commit", "checkpoint", or any commit operation, ALWAYS commit ALL uncommitted changes (staged, unstaged, and untracked). NEVER do a partial commit by selectively staging files. The gitpro scripts handle staging everything automatically.
+
+**FORBIDDEN**: Cherry-picking specific files to commit while leaving others uncommitted, unless the user explicitly says "only commit X" or "commit just the constitution file".
+
+---
+
 ## ABSOLUTE RULE: Git Operations via GitPro Skill ONLY
 
 **FORBIDDEN**: You are FORBIDDEN from running ANY of these git commands directly:

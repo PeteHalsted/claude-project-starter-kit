@@ -172,3 +172,21 @@ Toasts are deprecated. Use contextual feedback instead. See `development-guideli
 
 **Diagnostics**: LSP provides real-time TypeScript errors. See Section III — ignoring these is a CRITICAL FAILURE.
 
+## XIV. Fail Fast, Fail Loud (Zero Tolerance)
+
+**Every error MUST be visible to the user.** Silently swallowed errors are worse than crashes.
+
+**Default mental model**: When writing any code that can fail, the FIRST question is "how will the user know this failed?" If the answer is "they won't" — the code is wrong.
+
+| Forbidden | Why | Fix |
+|-----------|-----|-----|
+| `onError` that sets state nobody reads | Silent failure | Ensure error state is always rendered |
+| `catch` that only logs | User sees nothing | Re-throw or surface to UI |
+| Error stored in variable with no UI | Dead error | Wire it to visible feedback |
+| `try/catch` that returns default value | Masks the problem | Let it throw or show error state |
+| Mutation error handlers that don't match display conditions | Error set but never shown | Verify the error rendering path end-to-end |
+
+**When writing error handlers**: Trace the FULL path from error occurrence to user visibility. If any link in the chain is broken, the error is swallowed.
+
+**When reviewing code**: Look for `onError`, `catch`, `.catch()` — verify each one surfaces to the user, not just to logs or dead state.
+
