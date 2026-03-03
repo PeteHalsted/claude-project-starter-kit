@@ -88,7 +88,7 @@ Claude Code's native rules system - all `.md` files auto-discovered, no imports 
 | `projectrules.md` | Project-specific rules template |
 | `integrations/ref.md` | API/library doc lookup via Ref MCP |
 | `integrations/exa.md` | Web research via Exa MCP |
-| `integrations/ClaudeChrome.md` | Browser automation via Claude in Chrome |
+| `integrations/agent-browser.md` | Browser automation via agent-browser CLI |
 
 **Path-targeting**: Rules can be scoped to specific files using YAML frontmatter:
 ```yaml

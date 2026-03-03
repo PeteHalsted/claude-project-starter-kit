@@ -68,7 +68,6 @@ check_project() {
 declare -a MCP_RULES=(
     "integrations/ref.md:Ref:global"
     "integrations/exa.md:exa:global"
-    "integrations/ClaudeChrome.md:claude-in-chrome:browser-extension"
     "shadcn.md:shadcn-ui:project"
 )
 
@@ -89,40 +88,6 @@ check_global_mcp() {
             fi
         fi
     fi
-
-    return 1
-}
-
-# Check if browser extension is installed (via native messaging host)
-check_browser_extension() {
-    local ext_name="$1"
-
-    # Native messaging host locations for various Chromium browsers on macOS
-    local -a host_dirs=(
-        "$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts"
-        "$HOME/Library/Application Support/Chromium/NativeMessagingHosts"
-        "$HOME/Library/Application Support/BraveSoftware/Brave-Browser/NativeMessagingHosts"
-        "$HOME/Library/Application Support/Microsoft Edge/NativeMessagingHosts"
-        "$HOME/Library/Application Support/Arc/User Data/NativeMessagingHosts"
-    )
-
-    # Map extension names to native host manifest patterns
-    local manifest_pattern=""
-    case "$ext_name" in
-        "claude-in-chrome")
-            manifest_pattern="com.anthropic.claude_code_browser_extension.json"
-            ;;
-        *)
-            return 1
-            ;;
-    esac
-
-    # Check each browser's native messaging hosts directory
-    for dir in "${host_dirs[@]}"; do
-        if [[ -f "$dir/$manifest_pattern" ]]; then
-            return 0
-        fi
-    done
 
     return 1
 }
@@ -173,11 +138,6 @@ install_mcp() {
             echo "  Note: Requires EXA_API_KEY environment variable"
             claude mcp add exa -- npx -y mcp-remote "https://mcp.exa.ai/mcp?exaApiKey=\${EXA_API_KEY}"
             ;;
-        "claude-in-chrome")
-            warn "  claude-in-chrome is a browser extension, not an MCP."
-            echo "  Install from: https://chromewebstore.google.com/detail/claude-in-chrome"
-            echo "  Then run: claude mcp add claude-in-chrome"
-            ;;
         "shadcn-ui")
             echo "  Installing shadcn-ui MCP (project)..."
             claude mcp add shadcn-ui -- npx @jpisnice/shadcn-ui-mcp-server
@@ -220,9 +180,6 @@ check_mcp_rules() {
         case "$mcp_type" in
             "global")
                 check_global_mcp "$mcp_name" && mcp_installed=true
-                ;;
-            "browser-extension")
-                check_browser_extension "$mcp_name" && mcp_installed=true
                 ;;
             "project")
                 check_project_mcp "$mcp_name" && mcp_installed=true

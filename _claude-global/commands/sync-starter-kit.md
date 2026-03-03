@@ -40,7 +40,7 @@ Script checks MCP-dependent rules against installed MCPs:
 - MCP WITHOUT RULE: MCP installed but rule missing → suggest add rule
 - OK: Both rule and MCP present
 
-Global MCPs (checked via `claude mcp list`): Ref, exa, claude-in-chrome
+Global MCPs (checked via `claude mcp list`): Ref, exa
 Project MCPs (checked in `.mcp.json`): shadcn-ui
 
 ### Legacy Check
@@ -108,6 +108,5 @@ _claude-project/rules/          # Kit templates
     ├── projectrules.md         # Project-specific (never synced)
     └── integrations/
         ├── ref.md              # MCP: Ref (global)
-        ├── exa.md              # MCP: exa (global)
-        └── ClaudeChrome.md     # MCP: claude-in-chrome (global)
+        └── exa.md              # MCP: exa (global)
 ```
