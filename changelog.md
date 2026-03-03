@@ -11,6 +11,10 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ---
 
+### March 3, 2026
+
+- **📚 Changelog Policy** - Changelog entries now enforce public-facing language, excluding technical jargon, infrastructure details, and security-sensitive information
+
 ### February 15, 2026
 - **🔧 Remove Beads Integration** - Removed all beads sync, hooks, skills, docs, and TODO validation. Removed ccusage from statusline
 - **✨ Beads Removed ** - Beads completely removed from all logic, projects 

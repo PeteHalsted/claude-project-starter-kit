@@ -1,5 +1,18 @@
 # Changelog Rules
 
+## Public-Facing Document
+
+**Changelogs are always public-facing.** Write every entry as if a customer, end user, or non-technical stakeholder will read it.
+
+| Forbidden | Why | Write Instead |
+|-----------|-----|---------------|
+| Technical jargon (API routes, function names, internal modules) | Meaningless to users | Describe the user-visible outcome |
+| Infrastructure details (server config, deployment pipeline, CI changes) | Exposes internals | Omit entirely or describe the user benefit |
+| Security-sensitive info (auth mechanisms, vulnerability details, secret names) | Security risk | Generic description ("improved security") |
+| Internal file paths, database table names, schema changes | Implementation detail | Describe what changed for the user |
+
+**Rule of thumb**: If a entry only makes sense to someone reading the source code, it doesn't belong in the changelog.
+
 ## What Goes in Changelog
 
 **INCLUDE** (user-facing impact):
