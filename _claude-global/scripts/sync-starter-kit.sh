@@ -68,7 +68,6 @@ check_project() {
 declare -a MCP_RULES=(
     "integrations/ref.md:Ref:global"
     "integrations/exa.md:exa:global"
-    "shadcn.md:shadcn-ui:project"
 )
 
 # Check if global MCP is installed
@@ -137,10 +136,6 @@ install_mcp() {
             echo "  Installing exa MCP (global)..."
             echo "  Note: Requires EXA_API_KEY environment variable"
             claude mcp add exa -- npx -y mcp-remote "https://mcp.exa.ai/mcp?exaApiKey=\${EXA_API_KEY}"
-            ;;
-        "shadcn-ui")
-            echo "  Installing shadcn-ui MCP (project)..."
-            claude mcp add shadcn-ui -- npx @jpisnice/shadcn-ui-mcp-server
             ;;
         *)
             warn "  Unknown MCP: $mcp_name - manual installation required"
@@ -563,6 +558,79 @@ check_legacy_agents() {
     return 0
 }
 
+# Compare and sync skills (from _claude-project/skills/ to .claude/skills/)
+compare_skills() {
+    local kit_path="$1"
+    local kit_skills="$kit_path/_claude-project/skills"
+    local project_skills="./.claude/skills"
+
+    header "=== SKILLS ==="
+    echo ""
+
+    if [[ ! -d "$kit_skills" ]]; then
+        echo "No skills in starter kit"
+        echo ""
+        return 0
+    fi
+
+    local has_changes=0
+
+    # Check each skill directory in kit
+    for kit_skill_dir in "$kit_skills"/*/; do
+        [[ -d "$kit_skill_dir" ]] || continue
+
+        local skill_name
+        skill_name=$(basename "$kit_skill_dir")
+        local project_skill_dir="$project_skills/$skill_name"
+
+        if [[ ! -d "$project_skill_dir" ]]; then
+            warn "NEW SKILL: $skill_name (not installed in project)"
+            has_changes=1
+        else
+            # Compare SKILL.md as the identity file
+            local kit_hash project_hash
+            kit_hash=$(find "$kit_skill_dir" -name "*.md" -type f -exec md5 -q {} \; | sort | md5 -q)
+            project_hash=$(find "$project_skill_dir" -name "*.md" -type f -exec md5 -q {} \; | sort | md5 -q)
+
+            if [[ "$kit_hash" == "$project_hash" ]]; then
+                success "IDENTICAL: $skill_name"
+            else
+                warn "DIFFERS: $skill_name"
+                has_changes=1
+            fi
+        fi
+    done
+
+    # Check for project-only skills
+    if [[ -d "$project_skills" ]]; then
+        for project_skill_dir in "$project_skills"/*/; do
+            [[ -d "$project_skill_dir" ]] || continue
+
+            local skill_name
+            skill_name=$(basename "$project_skill_dir")
+            local kit_skill_dir="$kit_skills/$skill_name"
+
+            if [[ ! -d "$kit_skill_dir" ]]; then
+                info "PROJECT-ONLY SKILL: $skill_name"
+            fi
+        done
+    fi
+
+    # Check for deprecated shadcn-ui MCP that should be removed
+    local project_path="$PWD"
+    if [[ -f "$HOME/.claude.json" ]] && command -v jq &>/dev/null; then
+        if jq -e ".projects[\"$project_path\"].mcpServers[\"shadcn-ui\"]" "$HOME/.claude.json" &>/dev/null; then
+            warn "DEPRECATED: shadcn-ui MCP still configured"
+            echo "  The shadcn skill replaces the @jpisnice/shadcn-ui-mcp-server MCP."
+            echo "  Remove with: claude mcp remove shadcn-ui"
+            has_changes=1
+        fi
+    fi
+
+    echo ""
+    return $has_changes
+}
+
 # Main
 main() {
     echo "=========================================="
@@ -582,6 +650,7 @@ main() {
     local total_changes=0
 
     compare_rules "$kit_path" || total_changes=1
+    compare_skills "$kit_path" || total_changes=1
     check_mcp_rules "$kit_path" || total_changes=1
     compare_hooks "$kit_path" || total_changes=1
     audit_claude_md "$kit_path" || total_changes=1

@@ -65,7 +65,7 @@ Evaluate:
 - Semantic naming (ButtonActive not ButtonRed)
 - Prefer semantic classes (`text-foreground`) over manual dark mode
 - Use `cn()` utility for conditional CSS classes
-- Consult ShadCN MCP for component guidance
+- Follow shadcn skill rules (`.claude/skills/shadcn/`) for component patterns
 
 ## Mobile Development Standards
 

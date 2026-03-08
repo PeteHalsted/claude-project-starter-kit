@@ -34,6 +34,14 @@ Script outputs for each hook: OK, MISSING, DIFFERS, or NOT EXECUTABLE.
 - If has legacy @AGENTS.md import: WARN - deprecated
 - If has legacy @AIRules imports: WARN - migrate needed
 
+### Skills (.claude/skills/)
+Script compares starter kit's `_claude-project/skills/` with project's `.claude/skills/`.
+- List IDENTICAL skills (brief)
+- List DIFFERS skills with what changed
+- List NEW skills available from kit
+- List PROJECT-ONLY skills
+- Detect deprecated shadcn-ui MCP that should be removed
+
 ### MCP Rule Dependencies
 Script checks MCP-dependent rules against installed MCPs:
 - RULE WITHOUT MCP: Rule exists but MCP not installed → suggest delete or install
@@ -41,7 +49,6 @@ Script checks MCP-dependent rules against installed MCPs:
 - OK: Both rule and MCP present
 
 Global MCPs (checked via `claude mcp list`): Ref, exa
-Project MCPs (checked in `.mcp.json`): shadcn-ui
 
 ### Legacy Check
 - If AGENTS.md exists: WARN - deprecated, suggest deletion
@@ -55,6 +62,11 @@ For each issue found, ask user what to do:
 - DIFFERS: "Update [file] with kit version?"
 - NEW: "Add [file] to project?" → copy to .claude/rules/
 - PROJECT-ONLY: "Keep as custom or delete?"
+
+### Skills actions
+- NEW: "Install [skill] to project?" → copy to .claude/skills/
+- DIFFERS: "Update [skill] with kit version?"
+- DEPRECATED MCP: "Remove shadcn-ui MCP?" → `claude mcp remove shadcn-ui`
 
 ### Hook actions
 - Copy missing hooks
@@ -97,16 +109,25 @@ Starter kit templates in `_claude-project/rules/` sync to project's `.claude/rul
 
 Structure:
 ```
-_claude-project/rules/          # Kit templates
+_claude-project/rules/          # Kit rule templates
 └── (syncs to)
     project/.claude/rules/      # Project rules (auto-discovered)
     ├── constitution.md         # Core rules
     ├── development-guidelines.md
     ├── git.md
     ├── bashtools.md
-    ├── shadcn.md               # MCP: shadcn-ui (project)
     ├── projectrules.md         # Project-specific (never synced)
     └── integrations/
         ├── ref.md              # MCP: Ref (global)
         └── exa.md              # MCP: exa (global)
+
+_claude-project/skills/         # Kit skill templates
+└── (syncs to)
+    project/.claude/skills/     # Project skills
+    └── shadcn/                 # shadcn/ui skill (replaces MCP)
+        ├── SKILL.md
+        ├── cli.md
+        ├── customization.md
+        ├── mcp.md
+        └── rules/
 ```

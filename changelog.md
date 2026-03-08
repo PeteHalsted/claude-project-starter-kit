@@ -12,6 +12,8 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 ---
 
 ### March 8, 2026
+- **✨ Shadcn Skill Replaces MCP** - Official shadcn/ui skill now manages component patterns, CLI usage, and project context instead of the community MCP server
+- **✨ Skills Sync Support** - Starter kit sync now detects, compares, and installs skills alongside rules and hooks
 
 - **✨ GitPro Branch Script** - Branch creation, switching, and merge-from operations are now deterministic script-executed instead of AI-orchestrated raw git commands
 - **✨ Dynamic Co-Author Attribution** - Commit co-author now reflects the actual model in use instead of a hardcoded version
