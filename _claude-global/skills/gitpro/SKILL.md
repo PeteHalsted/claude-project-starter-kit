@@ -47,9 +47,10 @@ Git workflow automation using scripts for atomic, efficient operations.
 | "commit" | Full conventional commit | `gitpro-commit.sh` |
 | "merge to main" | Merge + version bump + cleanup | `gitpro-merge.sh` |
 | "sync" / "pull" / "get updates" | Safe fast-forward from remote | `gitpro-sync.sh` |
-| "merge from X" | Pull changes from branch | Manual (simple) |
+| "merge from X" | Pull changes from branch | `gitpro-branch.sh` |
 | "rename branch" | Rename current branch | Via commit script |
-| "new branch" | Create working branch | Manual (simple) |
+| "new branch" | Create working branch | `gitpro-branch.sh` |
+| "switch to X" | Switch branches | `gitpro-branch.sh` |
 
 ## Core Operations
 
@@ -102,7 +103,8 @@ Full conventional commit with changelog and optional branch rename.
   --message "✨ feat: add user authentication" \
   --old-branch "wt-petehalsted" \
   --new-branch "add-user-auth" \
-  --changelog "- **✨ Add User Authentication** - JWT-based auth with refresh tokens"
+  --changelog "- **✨ Add User Authentication** - JWT-based auth with refresh tokens" \
+  --model "Claude Opus 4.6"
 ```
 
 **Parameters:**
@@ -112,6 +114,7 @@ Full conventional commit with changelog and optional branch rename.
 | `--old-branch` | No | Current wt-* branch name (for rename) |
 | `--new-branch` | No | New descriptive branch name |
 | `--changelog` | No | Changelog entry text (if changelog.md exists) |
+| `--model` | Yes | Your model name (e.g., "Claude Opus 4.6", "Claude Sonnet 4.6") for Co-Authored-By |
 
 **What Script Does:**
 - Stage all changes
@@ -212,11 +215,24 @@ Safe fast-forward from remote. Use when another machine pushed changes and local
 
 Pull changes from another branch into current.
 
-**AI Steps (no script needed):**
-1. `git fetch origin`
-2. `git merge origin/{branch}` or `git merge {branch}`
-3. If conflicts: report and exit
-4. If not main/master: ask user about deleting source branch
+**AI Steps:**
+1. Get branch name from user
+2. Call script
+
+**Script Call:**
+```bash
+~/.claude/skills/gitpro/scripts/gitpro-branch.sh \
+  --action merge-from \
+  --branch "feature-branch"
+```
+
+**What Script Does:**
+- Fetches from origin
+- Prefers remote ref for freshness (falls back to local)
+- Shows incoming commits before merging
+- Merges with `--no-edit`
+- Detects and reports conflicts (exits for manual resolution)
+- Auto-pushes current branch if it has a remote
 
 ---
 
@@ -224,10 +240,53 @@ Pull changes from another branch into current.
 
 Create new working branch.
 
-**AI Steps (no script needed):**
-1. Check for uncommitted changes - offer to commit/checkpoint
-2. `git checkout -b {name}` (default: `wt-$(whoami)`)
-3. `git push -u origin {name}`
+**AI Steps:**
+1. Check for uncommitted changes - offer to commit/checkpoint first
+2. Get branch name from user (default: `wt-{username}`)
+3. Call script
+
+**Script Call:**
+```bash
+~/.claude/skills/gitpro/scripts/gitpro-branch.sh \
+  --action create \
+  --branch "feature-name"
+```
+
+Or with default `wt-{username}` naming:
+```bash
+~/.claude/skills/gitpro/scripts/gitpro-branch.sh \
+  --action create \
+  --username "petehalsted"
+```
+
+**What Script Does:**
+- Checks for uncommitted changes (aborts if dirty)
+- Checks if branch already exists locally (errors with hint)
+- Checks if branch exists on remote (tracks it instead of creating)
+- Creates branch and pushes with `-u` tracking
+
+---
+
+### Switch Branch
+
+Switch to an existing branch.
+
+**AI Steps:**
+1. Get target branch name from user
+2. Call script
+
+**Script Call:**
+```bash
+~/.claude/skills/gitpro/scripts/gitpro-branch.sh \
+  --action switch \
+  --branch "target-branch"
+```
+
+**What Script Does:**
+- Checks for uncommitted changes (aborts if dirty)
+- Checks local branches first, falls back to remote
+- Sets up tracking for remote branches automatically
+- No-ops if already on the target branch
 
 ---
 
@@ -264,6 +323,7 @@ All scripts in: `~/.claude/skills/gitpro/scripts/`
 | `gitpro-checkpoint.sh` | Quick timestamped commit |
 | `gitpro-commit.sh` | Full commit with changelog |
 | `gitpro-merge.sh` | Merge to main workflow (Node + Python) |
+| `gitpro-branch.sh` | Branch create, switch, merge-from |
 | `gitpro-sync.sh` | Safe fast-forward from remote |
 | `gitpro-bump-python.py` | Python version bump helper |
 | `create-token.sh` | Token for git-guard bypass |

@@ -1,6 +1,6 @@
 #!/bin/bash
 # GitPro Commit - Full conventional commit with changelog
-# Usage: gitpro-commit.sh --message "msg" [--type feat|fix|...] [--old-branch name] [--new-branch name] [--changelog "entry"]
+# Usage: gitpro-commit.sh --message "msg" [--type feat|fix|...] [--old-branch name] [--new-branch name] [--changelog "entry"] [--model "Claude Opus 4.6"]
 #
 # Pre-gitpro hook validates TS/TODO before this runs.
 # Uses --no-verify since validation already complete.
@@ -13,6 +13,7 @@ COMMIT_TYPE=""
 OLD_BRANCH=""
 NEW_BRANCH=""
 CHANGELOG_ENTRY=""
+MODEL_NAME=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -21,9 +22,15 @@ while [[ $# -gt 0 ]]; do
         --old-branch) OLD_BRANCH="$2"; shift 2 ;;
         --new-branch) NEW_BRANCH="$2"; shift 2 ;;
         --changelog) CHANGELOG_ENTRY="$2"; shift 2 ;;
+        --model) MODEL_NAME="$2"; shift 2 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
 done
+
+# Default model name if not provided
+if [ -z "$MODEL_NAME" ]; then
+    MODEL_NAME="Claude"
+fi
 
 if [ -z "$MESSAGE" ]; then
     echo "Error: --message is required" >&2
@@ -86,7 +93,7 @@ fi
 echo "Committing: $MESSAGE"
 git commit --no-verify -m "$MESSAGE
 
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+Co-Authored-By: $MODEL_NAME <noreply@anthropic.com>"
 
 # Push
 CURRENT_BRANCH=$(git branch --show-current)

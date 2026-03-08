@@ -8,7 +8,8 @@
 # ==========================================
 # Fudge factor (in tokens) to add to current_usage to approximate actual context window
 # Accounts for system prompt, tools, memory files, etc. not captured in current_usage
-FUDGE_FACTOR=40000
+# I believe this is actually just the Autocompact Buffer
+FUDGE_FACTOR=33000
 
 # Debug mode: Set to 1 to write input JSON to debug file
 # Toggle manually: DEBUG_STATUSLINE=0 (off) or DEBUG_STATUSLINE=1 (on)

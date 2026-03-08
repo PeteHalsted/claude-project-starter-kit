@@ -11,6 +11,12 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ---
 
+### March 8, 2026
+
+- **✨ GitPro Branch Script** - Branch creation, switching, and merge-from operations are now deterministic script-executed instead of AI-orchestrated raw git commands
+- **✨ Dynamic Co-Author Attribution** - Commit co-author now reflects the actual model in use instead of a hardcoded version
+- **⚡ Reduced Context Usage** - Disabled redundant built-in git instructions, saving ~1,500-2,000 tokens per turn
+
 ### March 3, 2026
 
 - **📚 Changelog Policy** - Changelog entries now enforce public-facing language, excluding technical jargon, infrastructure details, and security-sensitive information
