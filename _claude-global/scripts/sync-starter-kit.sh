@@ -7,6 +7,20 @@ set -euo pipefail
 
 CONFIG_FILE="$HOME/.claude/starter-kit-config.json"
 
+# Detect if running from the starter kit itself
+if [[ -f "$CONFIG_FILE" ]]; then
+    _kit_path=$(grep -o '"starterKitPath"[[:space:]]*:[[:space:]]*"[^"]*"' "$CONFIG_FILE" 2>/dev/null | cut -d'"' -f4 || true)
+    if [[ -n "$_kit_path" && "$PWD" == "$_kit_path" ]]; then
+        echo -e "\033[0;31mERROR: You are in the starter kit repo. sync-starter-kit is for downstream projects only.\033[0m" >&2
+        echo "" >&2
+        echo "From the starter kit, use:" >&2
+        echo "  /sync-global        - Sync global config (scripts, hooks, settings) to ~/.claude/" >&2
+        echo "  /pull-from-project  - Pull changes from a downstream project back into the kit" >&2
+        exit 1
+    fi
+    unset _kit_path
+fi
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'

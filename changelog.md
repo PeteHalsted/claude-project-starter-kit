@@ -11,6 +11,11 @@ All notable changes to the Claude Project Starter Kit will be documented here.
 
 ---
 
+### March 18, 2026
+
+- **✨ Starter Kit Guard** - sync-starter-kit now detects when run from the kit itself and directs to the correct commands
+- **✨ Better Auth Login Patterns** - Added proven production login pattern and route guards to TanStack skill
+
 ### March 8, 2026
 - **✨ Shadcn Skill Replaces MCP** - Official shadcn/ui skill now manages component patterns, CLI usage, and project context instead of the community MCP server
 - **✨ Skills Sync Support** - Starter kit sync now detects, compares, and installs skills alongside rules and hooks

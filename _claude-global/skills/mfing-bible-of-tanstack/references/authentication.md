@@ -7,6 +7,8 @@
 - [Using Auth in Server Functions](#using-auth-in-server-functions)
 - [Authentication Patterns by Role](#authentication-patterns-by-role)
 - [Why ServerOnly Pattern is Superior](#why-serveronly-pattern-is-superior)
+- [Client-Side Login (Better Auth)](#client-side-login-better-auth)
+- [Common Mistakes](#common-mistakes)
 
 ---
 
@@ -321,6 +323,118 @@ export const functionWithServerOnlyAuth = createServerFn({
     const authContext = await getServerAuth(['admin'])  // Guaranteed server-only
     // Direct access, no casting needed
   })
+```
+
+---
+
+## Client-Side Login (Better Auth)
+
+### CRITICAL: Never Use onSuccess/onError Callbacks
+
+Better Auth's `signIn.email` accepts `onSuccess`/`onError` callbacks, but they **silently fail in production builds**. The callbacks work in dev but break when Vite bundles the code for production — the closure context gets mangled.
+
+```typescript
+// ❌ WRONG: Callbacks don't fire reliably in production
+const result = await signIn.email(
+  { email, password },
+  {
+    onError: (ctx) => { setError(ctx.error.message) },  // May never fire
+    onSuccess: () => { navigate({ to: "/dashboard" }) }, // May never fire
+  },
+)
+
+// ❌ WRONG: Importing server functions into login component
+import { warmCache } from "@/lib/serverFunctions/cacheFn"
+// Server function imports can break module loading in production
+// and prevent the entire login component from working
+```
+
+### Correct Pattern: Result-Based + useEffect Redirect
+
+Proven in production across vinetracker and mysite projects:
+
+```typescript
+import { useState, useEffect } from "react"
+import { useRouter } from "@tanstack/react-router"
+import { signIn, useSession } from "@/lib/auth/authClient"
+
+function LoginPage() {
+  const router = useRouter()
+  const { data: session } = useSession()
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  // Session-driven redirect — fires when auth state changes
+  useEffect(() => {
+    if (session?.user) {
+      router.navigate({ to: "/dashboard", replace: true })
+    }
+  }, [session, router])
+
+  async function handleSubmit(e: React.SubmitEvent) {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+
+    try {
+      const result = await signIn.email({
+        email: email.toLowerCase().trim(),
+        password,
+      })
+
+      if (result.error) {
+        setError(result.error.message || "Invalid email or password")
+      }
+      // Success: useEffect detects session change and redirects
+    } catch {
+      setError("Sign in failed. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+}
+```
+
+**Why this works:**
+- `signIn.email` returns a result object — check `result.error` directly
+- `useSession()` hook reactively detects when the session cookie is set
+- `useEffect` fires on session change and navigates — no timing issues with cookies
+- `finally` always resets loading state — no hung UI on any code path
+- No server function imports in the login component — keeps the client bundle clean
+
+### Route Guards (Better Auth)
+
+```typescript
+// apps/dealer/src/lib/routeGuards.ts
+import { redirect } from "@tanstack/react-router"
+import { createServerFn } from "@tanstack/react-start"
+import { getRequestHeaders } from "@tanstack/react-start/server"
+import { auth } from "@/lib/auth/auth"
+
+const fetchAuthState = createServerFn({ method: "GET" }).handler(async () => {
+  const headers = getRequestHeaders()
+  const sessionResult = await auth.api.getSession({ headers })
+  if (!sessionResult?.user) return { authenticated: false }
+  if (sessionResult.user.usertype !== "dealer") return { authenticated: false }
+  return { authenticated: true }
+})
+
+export function authenticated() {
+  return {
+    beforeLoad: async () => {
+      const { authenticated: isAuthenticated } = await fetchAuthState()
+      if (!isAuthenticated) {
+        throw redirect({ to: "/login" })
+      }
+    },
+  }
+}
+
+// Usage in routes:
+export const Route = createFileRoute('/dashboard')({
+  ...authenticated(),
+  component: Dashboard,
+})
 ```
 
 ---

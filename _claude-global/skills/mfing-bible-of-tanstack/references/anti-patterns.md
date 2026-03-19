@@ -155,6 +155,31 @@ export const Route = createFileRoute('/users/$userId/')({
 })
 ```
 
+### Don't Use onSuccess/onError Callbacks for Login
+
+```typescript
+// ❌ WRONG: Callbacks silently fail in production builds
+const result = await signIn.email(
+  { email, password },
+  {
+    onSuccess: () => { navigate({ to: "/dashboard" }) },
+    onError: (ctx) => { setError(ctx.error.message) },
+  },
+)
+
+// ❌ WRONG: Importing server functions into login components
+import { warmCache } from "@/lib/serverFunctions/cacheFn"
+// onSuccess: () => { warmCache(); navigate(...) }
+// Server function imports can break entire module in production
+
+// ✅ CORRECT: Result-based + useSession redirect
+const result = await signIn.email({ email, password })
+if (result.error) { setError(result.error.message) }
+// useEffect watches useSession() and navigates on auth state change
+```
+
+See `references/authentication.md` → "Client-Side Login (Better Auth)" for full pattern.
+
 ---
 
 ## Database Connection Mistakes
