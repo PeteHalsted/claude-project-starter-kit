@@ -1,5 +1,4 @@
 {
-  "includeGitInstructions": false,
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
@@ -105,6 +104,8 @@
     "typescript-lsp@claude-plugins-official": true,
     "swift-lsp@claude-plugins-official": true
   },
-  "teammateMode": "iterm2",
-  "skipDangerousModePermissionPrompt": true
+  "autoUpdatesChannel": "latest",
+  "skipDangerousModePermissionPrompt": true,
+  "includeGitInstructions": false,
+  "teammateMode": "iterm2"
 }

@@ -158,7 +158,7 @@ export const Route = createFileRoute('/users/$userId/')({
 ### Don't Use onSuccess/onError Callbacks for Login
 
 ```typescript
-// ❌ WRONG: Callbacks silently fail in production builds
+// ❌ WRONG: Callbacks don't work reliably in production
 const result = await signIn.email(
   { email, password },
   {
@@ -169,16 +169,38 @@ const result = await signIn.email(
 
 // ❌ WRONG: Importing server functions into login components
 import { warmCache } from "@/lib/serverFunctions/cacheFn"
-// onSuccess: () => { warmCache(); navigate(...) }
 // Server function imports can break entire module in production
 
-// ✅ CORRECT: Result-based + useSession redirect
+// ❌ WRONG: Using useRouter instead of useNavigate
+const router = useRouter()
+await router.navigate({ to: "/dashboard" })
+
+// ✅ CORRECT: Result-based with useNavigate (match vinetracker pattern)
+const navigate = useNavigate()
 const result = await signIn.email({ email, password })
 if (result.error) { setError(result.error.message) }
-// useEffect watches useSession() and navigates on auth state change
+else { await navigate({ to: "/dashboard" }) }
 ```
 
-See `references/authentication.md` → "Client-Side Login (Better Auth)" for full pattern.
+### Don't Use Native Node.js HTTP Server for TanStack Start
+
+```typescript
+// ❌ WRONG: Native http.createServer loses Set-Cookie headers
+// Headers.forEach + res.setHeader collapses multiple Set-Cookie into one
+response.headers.forEach((value, key) => {
+  res.setHeader(key, value);  // DESTROYS multiple Set-Cookie headers
+});
+
+// ✅ CORRECT: Use Hono (match vinetracker/mysite pattern)
+// Hono handles Set-Cookie headers correctly via Fetch API
+app.all("*", async (c) => {
+  return await handler.fetch(c.req.raw);
+});
+```
+
+**Why:** The native Node.js `http.createServer` approach manually converts Fetch API Response headers to Node.js headers. `Headers.forEach()` iterates unique header names, and `res.setHeader()` overwrites previous values for the same key. Multiple `Set-Cookie` headers (session_token + session_data) get collapsed into one malformed header that browsers reject. Hono returns the Fetch Response directly, preserving all headers.
+
+See `references/authentication.md` → "Client-Side Login (Better Auth)" for full login pattern.
 
 ---
 

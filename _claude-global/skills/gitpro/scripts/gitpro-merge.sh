@@ -10,12 +10,14 @@ set -e
 SOURCE_BRANCH=""
 BUMP_TYPE=""
 USERNAME=""
+CHANGELOG_ENTRY=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --source-branch) SOURCE_BRANCH="$2"; shift 2 ;;
         --bump-type) BUMP_TYPE="$2"; shift 2 ;;
         --username) USERNAME="$2"; shift 2 ;;
+        --changelog) CHANGELOG_ENTRY="$2"; shift 2 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
 done
@@ -96,6 +98,43 @@ git pull
 # Merge source branch
 echo "Merging $SOURCE_BRANCH..."
 git merge "$SOURCE_BRANCH" --no-edit
+
+# Changelog update (if provided)
+if [ -n "$CHANGELOG_ENTRY" ] && [ -f "changelog.md" ]; then
+    echo "Updating changelog..."
+
+    # Get today's date header
+    TODAY=$(date +"%B %-d, %Y")
+    ENTRY_FILE=$(mktemp)
+    printf '%s\n' "$CHANGELOG_ENTRY" > "$ENTRY_FILE"
+
+    if grep -q "^### $TODAY" changelog.md; then
+        # Today's header exists - add entry after it
+        START_LINE=$(grep -n "^### $TODAY" changelog.md | head -1 | cut -d: -f1)
+        {
+            head -n "$START_LINE" changelog.md
+            cat "$ENTRY_FILE"
+            tail -n +"$((START_LINE + 1))" changelog.md
+        } > changelog.md.tmp && mv changelog.md.tmp changelog.md
+    else
+        # Add new date section before first ### header
+        FIRST_HEADER=$(grep -n "^### " changelog.md | head -1 | cut -d: -f1)
+        if [ -n "$FIRST_HEADER" ]; then
+            {
+                head -n "$((FIRST_HEADER - 1))" changelog.md
+                echo "### $TODAY"
+                echo ""
+                cat "$ENTRY_FILE"
+                echo ""
+                tail -n +"$FIRST_HEADER" changelog.md
+            } > changelog.md.tmp && mv changelog.md.tmp changelog.md
+        fi
+    fi
+
+    rm -f "$ENTRY_FILE"
+    git add changelog.md
+    git commit --no-verify -m "📝 docs: update changelog"
+fi
 
 # Version bump (skip if no project manifest)
 if [ "$PROJECT_TYPE" = "unknown" ] || [ -z "$BUMP_TYPE" ]; then

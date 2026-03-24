@@ -76,7 +76,7 @@ Fast timestamped commit without full analysis.
 
 ### Commit
 
-Full conventional commit with changelog and optional branch rename.
+Full conventional commit with optional branch rename.
 
 **AI Steps:**
 1. Run `git status` to see all changed/untracked files
@@ -85,16 +85,13 @@ Full conventional commit with changelog and optional branch rename.
    - Group related files (e.g., all files for "image processing" vs "AI descriptions")
    - Identify distinct features/fixes being committed
    - Note: Changes may span multiple sessions - analyze ALL diffs, not just session memory
-4. Load reference files:
+4. Load reference file:
    - `~/.claude/skills/gitpro/references/commit-types.md` - emoji/type mapping
-   - `~/.claude/skills/gitpro/references/changelog-rules.md` - what goes in changelog
 5. **Build commit message:**
    - If single feature: `<emoji> <type>: <description>`
    - If multiple features: Multi-line with primary type, then bullet list
-6. **Build changelog entry:**
-   - List ALL user-facing features/fixes (see changelog-rules.md)
-   - Exclude refactors, tests, docs, style changes
-7. Determine branch rename if current is `wt-*`
+6. Determine branch rename if current is `wt-*`
+7. **Changelog (main-only projects):** If committing directly to `main` (no working branch workflow), also build changelog entry and pass `--changelog` (see Changelog section below)
 8. Call script with parameters
 
 **Script Call:**
@@ -103,6 +100,13 @@ Full conventional commit with changelog and optional branch rename.
   --message "✨ feat: add user authentication" \
   --old-branch "wt-petehalsted" \
   --new-branch "add-user-auth" \
+  --model "Claude Opus 4.6"
+```
+
+For main-only projects (committing directly to main):
+```bash
+~/.claude/skills/gitpro/scripts/gitpro-commit.sh \
+  --message "✨ feat: add user authentication" \
   --changelog "- **✨ Add User Authentication** - JWT-based auth with refresh tokens" \
   --model "Claude Opus 4.6"
 ```
@@ -113,7 +117,7 @@ Full conventional commit with changelog and optional branch rename.
 | `--message` | Yes | Full commit message with emoji and type |
 | `--old-branch` | No | Current wt-* branch name (for rename) |
 | `--new-branch` | No | New descriptive branch name |
-| `--changelog` | No | Changelog entry text (if changelog.md exists) |
+| `--changelog` | No | Changelog entry text — **only for main-only projects** (see Changelog section) |
 | `--model` | Yes | Your model name (e.g., "Claude Opus 4.6", "Claude Sonnet 4.6") for Co-Authored-By |
 
 **What Script Does:**
@@ -127,33 +131,41 @@ Full conventional commit with changelog and optional branch rename.
 - Do NOT rely on what you remember working on in this session
 - Uncommitted changes may include work from previous sessions
 - Always use `git diff --stat` to see the actual scope of changes
-- If you see changes you don't recognize, they still need to be in the commit message/changelog
+- If you see changes you don't recognize, they still need to be in the commit message
 
 ---
 
 ### Merge to Main
 
-Full merge workflow with version bump and cleanup.
+Full merge workflow with changelog, version bump, and cleanup.
 
 **AI Steps:**
 1. Check for uncommitted changes - if any, do Commit workflow first
 2. Get current branch name: `git branch --show-current`
-3. Analyze commits to determine version bump type:
+3. Analyze ALL commits on this branch to determine version bump type:
    ```bash
    git log --oneline main..HEAD
    ```
    - **major**: BREAKING CHANGE, ! after type
    - **minor**: feat:, ✨
    - **patch**: everything else
-4. Get username via whoami command
-5. Call script with parameters
+4. **Build changelog entry** (see Changelog section below):
+   - Analyze the FULL branch diff against main: `git diff --stat main..HEAD`
+   - Review all commit messages: `git log --oneline main..HEAD`
+   - This captures ALL work — checkpoints, multiple commits, everything
+   - Load `~/.claude/skills/gitpro/references/changelog-rules.md`
+   - List ALL user-facing features/fixes across the entire branch
+   - Exclude refactors, tests, docs, style changes
+5. Get username via whoami command
+6. Call script with parameters
 
 **Script Call:**
 ```bash
 ~/.claude/skills/gitpro/scripts/gitpro-merge.sh \
   --source-branch "add-user-auth" \
   --bump-type "minor" \
-  --username "petehalsted"
+  --username "petehalsted" \
+  --changelog "- **✨ Add User Authentication** - JWT-based auth with refresh tokens"
 ```
 
 **Parameters:**
@@ -162,11 +174,13 @@ Full merge workflow with version bump and cleanup.
 | `--source-branch` | Yes | Branch being merged to main |
 | `--bump-type` | No | major, minor, or patch (skip if no manifest) |
 | `--username` | Yes | For creating wt-{username} branch |
+| `--changelog` | No | Changelog entry text (if changelog.md exists) |
 
 **What Script Does:**
 - Push source branch
 - Checkout main, pull
 - Merge source branch
+- Update changelog (if --changelog provided)
 - Bump version, commit, tag (if package.json or pyproject.toml exists)
 - Push main and tags
 - Delete merged source branch
@@ -289,6 +303,26 @@ Switch to an existing branch.
 - No-ops if already on the target branch
 
 ---
+
+## Changelog Strategy
+
+**Changelog updates happen at the merge boundary** — the point where changes land on `main`.
+
+| Project Workflow | When Changelog Updates | Why |
+|-----------------|----------------------|-----|
+| Working branch → merge to main | **Merge step** | Merge sees ALL commits (checkpoints + commits) on the branch |
+| Committing directly to main | **Commit step** | The commit IS the merge boundary |
+
+**How to detect:** Check `git branch --show-current`. If it's `main`, changelog goes in commit. If it's anything else, changelog goes in merge.
+
+**Why this matters:** Checkpoints are fast commits with no changelog. If changelog only looked at the final commit's diff, all checkpointed work would be invisible. The merge step sees the full branch diff (`main..HEAD`), capturing everything.
+
+**Building the changelog entry:**
+1. `git diff --stat main..HEAD` — see all files changed across the branch
+2. `git log --oneline main..HEAD` — see all commit messages (checkpoints + commits)
+3. Load `~/.claude/skills/gitpro/references/changelog-rules.md` for formatting rules
+4. Include ALL user-facing features/fixes from the entire branch
+5. Exclude refactors, tests, docs, style changes
 
 ## Commit Types Reference
 

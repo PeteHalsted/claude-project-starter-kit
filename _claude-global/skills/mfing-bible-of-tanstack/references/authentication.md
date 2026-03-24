@@ -349,27 +349,19 @@ import { warmCache } from "@/lib/serverFunctions/cacheFn"
 // and prevent the entire login component from working
 ```
 
-### Correct Pattern: Result-Based + useEffect Redirect
+### Correct Pattern: Result-Based with Explicit Navigate
 
-Proven in production across vinetracker and mysite projects:
+Proven in production across vinetracker and leakgopher projects:
 
 ```typescript
-import { useState, useEffect } from "react"
-import { useRouter } from "@tanstack/react-router"
-import { signIn, useSession } from "@/lib/auth/authClient"
+import { useState } from "react"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { signIn } from "@/lib/auth/authClient"
 
 function LoginPage() {
-  const router = useRouter()
-  const { data: session } = useSession()
+  const navigate = useNavigate()
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-
-  // Session-driven redirect — fires when auth state changes
-  useEffect(() => {
-    if (session?.user) {
-      router.navigate({ to: "/dashboard", replace: true })
-    }
-  }, [session, router])
 
   async function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault()
@@ -384,8 +376,9 @@ function LoginPage() {
 
       if (result.error) {
         setError(result.error.message || "Invalid email or password")
+      } else {
+        await navigate({ to: "/dashboard" })
       }
-      // Success: useEffect detects session change and redirects
     } catch {
       setError("Sign in failed. Please try again.")
     } finally {
@@ -395,12 +388,39 @@ function LoginPage() {
 }
 ```
 
-**Why this works:**
-- `signIn.email` returns a result object — check `result.error` directly
-- `useSession()` hook reactively detects when the session cookie is set
-- `useEffect` fires on session change and navigates — no timing issues with cookies
+**Critical rules:**
+- Use **`useNavigate`**, not `useRouter` — vinetracker pattern
+- Navigate explicitly in the `else` branch — this is the primary redirect
+- Do NOT use `useSession` + `useEffect` for post-login redirect
 - `finally` always resets loading state — no hung UI on any code path
 - No server function imports in the login component — keeps the client bundle clean
+
+### Production Server: Use Hono, Not Native Node.js HTTP
+
+**CRITICAL:** TanStack Start outputs a Fetch API handler. The production server that wraps it MUST use Hono — not native `http.createServer`.
+
+```typescript
+// ❌ WRONG: Native http.createServer destroys Set-Cookie headers
+// Headers.forEach + res.setHeader collapses multiple Set-Cookie into one
+const httpServer = createServer(async (req, res) => {
+  const response = await server.fetch(request);
+  response.headers.forEach((value, key) => {
+    res.setHeader(key, value);  // OVERWRITES previous Set-Cookie
+  });
+});
+
+// ✅ CORRECT: Hono handles headers correctly (match vinetracker/mysite)
+import { serve } from "@hono/node-server";
+import { Hono } from "hono";
+
+const app = new Hono();
+app.all("*", async (c) => {
+  return await handler.fetch(c.req.raw);
+});
+serve({ fetch: app.fetch, port: PORT, hostname: HOST });
+```
+
+**Why:** Multiple `Set-Cookie` headers (session_token + session_data) must be sent as separate HTTP headers. Native Node's `res.setHeader()` overwrites, Hono preserves them. This causes login to return 200 with user data but no session cookie — works locally, fails in production.
 
 ### Route Guards (Better Auth)
 
